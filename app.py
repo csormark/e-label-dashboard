@@ -2,6 +2,18 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 
+from io import BytesIO
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer,
+    Table,
+    TableStyle,
+)
+from reportlab.lib.styles import getSampleStyleSheet
+
 from calculations import (
     calculate_power,
     calculate_eon,
@@ -316,11 +328,223 @@ def performance_map(
         current_dpu,
         current_debris,
         marker="X",
-        s=150,
+        s=200,
+        color="red",
         edgecolor="black",
         zorder=10,
         label="Current Product"
     )
+
+    # -------------------------------------------------
+    # Grade labels
+    # -------------------------------------------------
+
+    if boundaries["A"] == 106:
+
+        # Hard Floor
+
+        ax.text(
+            96.0, 68, "D",
+            fontsize=26,
+            fontweight="bold",
+            color="#ff5500"
+        )
+
+        ax.text(
+            100.0, 68, "C",
+            fontsize=26,
+            fontweight="bold",
+            color="#e0b000"
+        )
+
+        ax.text(
+            104.0, 68, "B",
+            fontsize=26,
+            fontweight="bold",
+            color="#7fc942"
+        )
+
+        ax.text(
+            108.5, 68, "A",
+            fontsize=26,
+            fontweight="bold",
+            color="#00aa00"
+        )
+
+    else:
+
+        # Carpet
+
+        ax.text(
+            71.0, 68, "D",
+            fontsize=26,
+            fontweight="bold",
+            color="#ff5500"
+        )
+
+        ax.text(
+            75.5, 68, "C",
+            fontsize=26,
+            fontweight="bold",
+            color="#e0b000"
+        )
+
+        ax.text(
+            79.8, 68, "B",
+            fontsize=26,
+            fontweight="bold",
+            color="#7fc942"
+        )
+
+        ax.text(
+            84.2, 68, "A",
+            fontsize=26,
+            fontweight="bold",
+            color="#00aa00"
+        )
+
+    # -------------------------------------------------
+    # Plot formatting
+    # -------------------------------------------------
+
+    ax.set_title(
+        title,
+        fontsize=20,
+        fontweight="bold"
+    )
+
+    ax.set_xlabel("Dust Pick-Up [%]")
+    ax.set_ylabel("Debris Pick-Up [%]")
+
+    ax.set_xlim(x_range)
+    ax.set_ylim(y_range)
+
+    ax.grid(True, alpha=0.3)
+
+    ax.legend()
+
+    return fig
+
+# =====================================================
+# PDF REPORT
+# =====================================================
+
+
+def create_pdf_report(
+    power_type,
+    eei,
+    ae,
+    cp_factor,
+    grade,
+    carpet_class,
+    hardfloor_class,
+    sound_class,
+    cp_carpet,
+    cp_hardfloor,
+    sound_gp,
+):
+
+    buffer = BytesIO()
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4
+    )
+
+    styles = getSampleStyleSheet()
+
+    elements = []
+
+    title = Paragraph(
+        "Vacuum Cleaner E-Label Assessment Report",
+        styles["Title"]
+    )
+
+    elements.append(title)
+
+    elements.append(Spacer(1, 12))
+
+    summary_data = [
+        ["Metric", "Value"],
+        ["Product Type", power_type],
+        ["Energy Class", grade],
+        ["EEI", f"{eei:.1f}"],
+        ["AE", f"{ae:.1f} kWh/a"],
+        ["CP Factor", f"{cp_factor:.6f}"],
+    ]
+
+    summary_table = Table(
+        summary_data,
+        colWidths=[200, 200]
+    )
+
+    summary_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+                ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ]
+        )
+    )
+
+    elements.append(summary_table)
+
+    elements.append(Spacer(1, 15))
+
+    grades_data = [
+        ["Category", "Grade", "Value"],
+        ["Carpet", carpet_class, f"{cp_carpet:.1f}"],
+        ["Hard Floor", hardfloor_class, f"{cp_hardfloor:.1f}"],
+        ["Sound", sound_class, f"{sound_gp:.1f} dBA"],
+    ]
+
+    grades_table = Table(
+        grades_data,
+        colWidths=[150, 100, 150]
+    )
+
+    grades_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+                ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ]
+        )
+    )
+
+    elements.append(
+        Paragraph(
+            "Performance Summary",
+            styles["Heading2"]
+        )
+    )
+
+    elements.append(grades_table)
+
+    elements.append(Spacer(1, 15))
+
+    elements.append(
+        Paragraph(
+            f"""
+            Current Energy Class: <b>{grade}</b><br/>
+            EEI: <b>{eei:.1f}</b><br/>
+            Annual Energy Consumption: <b>{ae:.1f} kWh/a</b><br/>
+            CP Factor: <b>{cp_factor:.6f}</b>
+            """,
+            styles["BodyText"]
+        )
+    )
+
+    doc.build(elements)
+
+    pdf = buffer.getvalue()
+
+    buffer.close()
+
+    return pdf
+
     # -------------------------------------------------
     # Grade labels
     # -------------------------------------------------
@@ -976,6 +1200,32 @@ with c2:
     )
 
     st.pyplot(hardfloor_fig)
+
+
+## GENERATE REPORT
+
+pdf_report = create_pdf_report(
+    power_type=power_type,
+    eei=eei,
+    ae=ae,
+    cp_factor=cp_factor,
+    grade=grade,
+    carpet_class=carpet_class,
+    hardfloor_class=hardfloor_class,
+    sound_class=sound_class,
+    cp_carpet=cp_carpet,
+    cp_hardfloor=cp_hardfloor,
+    sound_gp=sound_gp,
+)
+
+st.subheader("Export")
+
+st.download_button(
+    label="📄 Download PDF Report",
+    data=pdf_report,
+    file_name="e_label_report.pdf",
+    mime="application/pdf"
+)
 
 # =====================================================
 # CALCULATION CONSTANTS
