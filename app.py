@@ -1049,7 +1049,7 @@ with st.expander("Technical Details"):
 
 st.info(
     """
-    Version 0.9.1 | Last updated: 2026-10-09
+    Version 0.9.2 | Last updated: 2026-10-09
 
     Author: Christoffer Sörmark
     """
