@@ -570,9 +570,9 @@ with p1:
     dpu_carpet = (
         st.slider(
             "Dust Pick-Up on Carpet [%]",
-            95,
-            115,
-            105,
+            70,
+            100,
+            75,
             help="""3 DS dust removal from Wilton carpet"""
         ) / 100
     )
