@@ -1,5 +1,4 @@
 import streamlit as st
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -319,7 +318,7 @@ def performance_map(
     ax.scatter(
         current_dpu,
         current_debris,
-        color="red",
+        marker="X",
         s=150,
         edgecolor="black",
         zorder=10,
@@ -453,16 +452,16 @@ st.divider()
 
 with st.expander("General Settings", expanded=True):
 
-    c1, c2 = st.columns(2)
+  c1, c2, c3 = st.columns(3)
 
-    with c1:
+with c1:
 
         nozzle_width = st.number_input(
             "Nozzle Width [mm]",
             value=250 if power_type == "Cordless" else 280
         )
 
-    with c2:
+with c2:
 
         if power_type == "Cordless":
 
@@ -482,6 +481,14 @@ with st.expander("General Settings", expanded=True):
                 disabled=True
             )
 
+with c3:
+
+        dcpm_power = st.number_input(
+            "DCPM Power [W]",
+            value=10,
+            step=1
+    )
+
 # =====================================================
 # BATTERY
 # =====================================================
@@ -493,7 +500,7 @@ if power_type == "Cordless":
     with b1:
 
         battery_efficiency = st.number_input(
-            "Battery Efficiency [%]",
+            "Battery Efficiency",
             value=0.90,
             step=0.01
         )
@@ -501,7 +508,7 @@ if power_type == "Cordless":
     with b2:
 
         charger_efficiency = st.number_input(
-            "Charger Efficiency [%]",
+            "Charger Efficiency",
             value=0.90,
             step=0.01
         )
@@ -524,7 +531,7 @@ with p1:
     mfu_carpet = st.slider(
         "MFU power Carpet [W]",
         0,
-        1000,
+        750,
         400
     )
 
@@ -533,7 +540,7 @@ with p1:
         nozzle_carpet = st.slider(
             "Nozzle power Carpet [W]",
             0,
-            300,
+            100,
             50
         )
 
@@ -544,35 +551,29 @@ with p1:
         st.slider(
             "Nozzle power Carpet [W]",
             0,
-            300,
+            100,
             0,
             disabled=True
         )
 
-    dcpm_carpet = st.slider(
-        "DCPM power Carpet [W]",
-        0,
-        100,
-        10
-    )
 
     clogging_carpet = (
         st.slider(
             "Clogging Carpet [%]",
             0,
-            100,
+            50,
             10,
             help="""Input power added on carpet due to clogging performance drop"""
         ) / 100
     )
-
+    
     dpu_carpet = (
         st.slider(
-            "Dust Pick-Up Carpet [%]",
-            70,
-            100,
-            80,
-            help="""3 DS Wilton carpet dust pick up"""
+            "Dust Pick-Up on Carpet [%]",
+            95,
+            115,
+            105,
+            help="""3 DS dust removal from Wilton carpet"""
         ) / 100
     )
 
@@ -581,7 +582,7 @@ with p1:
             "Debris Pick-Up Carpet [%]",
             45,
             100,
-            90,
+            80,
             help="""3 DS FS/BS average debris pick up on carpet"""
         ) / 100
     )
@@ -593,8 +594,8 @@ with p2:
     mfu_hardfloor = st.slider(
         "MFU power Hard Floor [W]",
         0,
-        1000,
-        280
+        750,
+        400
     )
 
     if power_type == "Cordless":
@@ -602,7 +603,7 @@ with p2:
         nozzle_hardfloor = st.slider(
             "Nozzle power Hard Floor [W]",
             0,
-            300,
+            100,
             10
         )
 
@@ -613,23 +614,17 @@ with p2:
         st.slider(
             "Nozzle power Hard Floor [W]",
             0,
-            300,
+            100,
             0,
             disabled=True
         )
 
-    dcpm_hardfloor = st.slider(
-        "DCPM power Hard Floor [W]",
-        0,
-        100,
-        10
-    )
 
     clogging_hardfloor = (
         st.slider(
             "Clogging Hard Floor [%]",
             0,
-            100,
+            50,
             10,
             help="""Input power added on hardfloor due to clogging performance drop"""
         ) / 100
@@ -650,7 +645,7 @@ with p2:
             "Debris Pick-Up Hard Floor [%]",
             45,
             100,
-            90,
+            80,
             help="""3 DS FS/BS average debris pick up on hardfloor"""
         ) / 100
     )
@@ -683,7 +678,7 @@ with s2:
 power_carpet = calculate_power(
     mfu_carpet,
     nozzle_carpet,
-    dcpm_carpet,
+    dcpm_power,
     clogging_carpet,
     charger_efficiency,
     battery_efficiency,
@@ -692,7 +687,7 @@ power_carpet = calculate_power(
 power_hardfloor = calculate_power(
     mfu_hardfloor,
     nozzle_hardfloor,
-    dcpm_hardfloor,
+    dcpm_power,
     clogging_hardfloor,
     charger_efficiency,
     battery_efficiency,
@@ -790,6 +785,25 @@ with k4:
     )
 
 # =====================================================
+# AE COMPLIANCE CHECK
+# =====================================================
+
+if ae > 36:
+
+    st.error(
+        f"❌ Annual Energy Consumption exceeds SAE limit. "
+        f"AE = {ae:.1f} kWh/year (Limit = 36.0)"
+    )
+
+elif ae > 33:
+
+    st.warning(
+        f"⚠️ Annual Energy Consumption is approaching the SAE limit. "
+        f"AE = {ae:.1f} kWh/year (Limit = 36.0)"
+    )
+
+
+# =====================================================
 # PERFORMANCE VALUES
 # =====================================================
 
@@ -816,6 +830,38 @@ with p3:
         f"{sound_gp:.1f} dBA",
     )
 
+# =====================================================
+# ENERGY LABEL RATING
+# =====================================================
+
+st.subheader("Energy Label Rating")
+
+energy_grade_gauge(grade)
+
+m1, m2 = st.columns(2)
+
+with m1:
+
+    st.metric(
+        "Margin to worse grade",
+        f"{eei_margin['to_worse']:.2f}"
+    )
+
+with m2:
+
+    if grade != "A":
+
+        st.metric(
+            "Improvement needed for better grade",
+            f"{eei_margin['to_better']:.2f}"
+        )
+
+st.markdown("")
+
+st.metric(
+    "Current Energy Class",
+    grade
+)
 
 # =====================================================
 # PERFORMANCE GRADES
@@ -875,38 +921,6 @@ with g3:
             f"Reduction needed for next grade: {sound_margin['to_better']:.1f} dBA"
         )
 
-# =====================================================
-# ENERGY LABEL RATING
-# =====================================================
-
-st.subheader("Energy Label Rating")
-
-energy_grade_gauge(grade)
-
-m1, m2 = st.columns(2)
-
-with m1:
-
-    st.metric(
-        "Margin to worse grade",
-        f"{eei_margin['to_worse']:.2f}"
-    )
-
-with m2:
-
-    if grade != "A":
-
-        st.metric(
-            "Improvement needed for better grade",
-            f"{eei_margin['to_better']:.2f}"
-        )
-
-st.markdown("")
-
-st.metric(
-    "Current Energy Class",
-    grade
-)
 
 st.markdown(
     f"""
@@ -965,6 +979,57 @@ with c2:
     )
 
     st.pyplot(hardfloor_fig)
+
+# =====================================================
+# CALCULATION CONSTANTS
+# =====================================================
+
+with st.expander("Calculation Constants"):
+
+    st.markdown("""
+### Energy and Performance Constants
+
+- **General Purpose weighting**
+  - Hard Floor: **75%**
+  - Carpet: **25%**
+
+- **Cleaning Performance weighting**
+  - Dust Pick-Up (DPU): **90%**
+  - Debris Pick-Up: **10%**
+
+- **Standard Annual Energy (SAE)**
+  - **36 kWh/year**
+
+- **Minimum Cleaning Performance Reference (CPmin)**
+  - **0.84375**
+  - Corresponds to:
+    - Debris Carpet: **45%**
+    - Debris Hard Floor: **45%**
+    - DPU Carpet: **70%**
+    - DPU Hard Floor: **95%**
+
+### Key Equations
+
+**CP Carpet**
+
+CPc = (0.9 × DPUc + 0.1 × DEBc) × 100
+
+**CP Hard Floor**
+
+CPhf = (0.9 × DPUhf + 0.1 × DEBhf) × 100
+
+**CP General Purpose**
+
+CPgp = (0.25 × CPc + 0.75 × CPhf) / 100
+
+**CP Factor**
+
+CPfactor = 0.84375 / (0.66 × 0.84375 + 0.33 × CPgp)
+
+**EEI**
+
+EEI = (AE / 36) × CPfactor × 100
+""")
 
 # =====================================================
 # TECHNICAL DETAILS
