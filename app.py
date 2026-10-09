@@ -49,15 +49,14 @@ def carpet_margins(cp):
     elif cp >= 72:
         return {
             "to_better": 77 - cp,
-            "to_worse": cp,
+            "to_worse": cp - 72,
         }
 
     else:
         return {
             "to_better": 72 - cp,
-            "to_worse": cp,
+            "to_worse": 0,
         }
-
 
 def hardfloor_grade(cp):
 
@@ -87,15 +86,14 @@ def hardfloor_margins(cp):
     elif cp >= 95:
         return {
             "to_better": 101 - cp,
-            "to_worse": cp,
+            "to_worse": cp - 95,
         }
 
     else:
         return {
             "to_better": 95 - cp,
-            "to_worse": cp,
+            "to_worse": 0,
         }
-
 
 def sound_grade(sound_db):
 
@@ -114,21 +112,21 @@ def sound_margins(sound_db):
 
         return {
             "to_better": 0,
-            "to_worse": 68 - sound_db,
+            "to_worse": 74 - sound_db,
         }
 
     elif sound_db <= 74:
 
         return {
             "to_better": sound_db - 68,
-            "to_worse": 74 - sound_db,
+            "to_worse": 77 - sound_db,
         }
 
     elif sound_db <= 77:
 
         return {
             "to_better": sound_db - 74,
-            "to_worse": 77 - sound_db,
+            "to_worse": 78 - sound_db,
         }
 
     else:
@@ -137,7 +135,6 @@ def sound_margins(sound_db):
             "to_better": sound_db - 77,
             "to_worse": 0,
         }
-
 
 def energy_color(grade):
 
