@@ -1,5 +1,8 @@
 import streamlit as st
 
+import numpy as np
+import matplotlib.pyplot as plt
+
 from calculations import (
     calculate_power,
     calculate_eon,
@@ -137,7 +140,7 @@ def sound_margins(sound_db):
         }
 
 
-def grade_color(grade):
+def energy_color(grade):
 
     colors = {
         "A": "#00A651",
@@ -150,6 +153,19 @@ def grade_color(grade):
     }
 
     return colors.get(grade, "#808080")
+
+def performance_color(grade):
+
+    colors = {
+        "A": "#00A651",
+        "B": "#8BC34A",
+        "C": "#FFD54F",
+        "D": "#FF7043",
+    }
+
+    return colors.get(grade, "#808080")
+
+
 
 def eei_margins(eei):
 
@@ -181,7 +197,7 @@ def grade_card(title, grade):
     st.markdown(
         f"""
         <div style="
-            background:{grade_color(grade)};
+            background:{performance_color(grade)};
             color:white;
             border-radius:12px;
             padding:20px;
@@ -246,6 +262,172 @@ def energy_grade_gauge(active_grade):
                 unsafe_allow_html=True,
             )
 
+def performance_map(
+    title,
+    current_dpu,
+    current_debris,
+    boundaries,
+    x_range,
+    y_range,
+):
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    x = np.linspace(x_range[0], x_range[1], 200)
+
+    region_colors = [
+        "#e9e5c4",  # D
+        "#eef0c5",  # C
+        "#bfdcbf",  # B
+        "#97d397",  # A
+    ]
+
+    y_top = y_range[1]
+    y_bottom = y_range[0]
+
+    y_c = (boundaries["C"] - 0.9 * x) / 0.1
+    y_b = (boundaries["B"] - 0.9 * x) / 0.1
+    y_a = (boundaries["A"] - 0.9 * x) / 0.1
+
+    ax.fill_between(
+        x, y_bottom, y_c,
+        color=region_colors[0],
+        alpha=0.8
+    )
+
+    ax.fill_between(
+        x, y_c, y_b,
+        color=region_colors[1],
+        alpha=0.8
+    )
+
+    ax.fill_between(
+        x, y_b, y_a,
+        color=region_colors[2],
+        alpha=0.8
+    )
+
+    ax.fill_between(
+        x, y_a, y_top,
+        color=region_colors[3],
+        alpha=0.8
+    )
+
+    ax.plot(x, y_c, color="#f0b400", linewidth=2)
+    ax.plot(x, y_b, color="#3ae000", linewidth=2)
+    ax.plot(x, y_a, color="#00aa33", linewidth=2)
+
+    ax.scatter(
+        current_dpu,
+        current_debris,
+        color="red",
+        s=150,
+        edgecolor="black",
+        zorder=10,
+        label="Current Product"
+    )
+    # -------------------------------------------------
+    # Grade labels
+    # -------------------------------------------------
+
+    if boundaries["A"] == 106:
+        # Hard Floor
+
+        ax.text(
+            96.0,
+            68,
+            "D",
+            fontsize=26,
+            fontweight="bold",
+            color="#ff5500"
+        )
+
+        ax.text(
+            100.0,
+            68,
+            "C",
+            fontsize=26,
+            fontweight="bold",
+            color="#e0b000"
+        )
+
+        ax.text(
+            104.0,
+            68,
+            "B",
+            fontsize=26,
+            fontweight="bold",
+            color="#7fc942"
+        )
+
+        ax.text(
+            108.5,
+            68,
+            "A",
+            fontsize=26,
+            fontweight="bold",
+            color="#00aa00"
+        )
+
+    else:
+        # Carpet
+
+        ax.text(
+            71.0,
+            68,
+            "D",
+            fontsize=26,
+            fontweight="bold",
+            color="#ff5500"
+        )
+
+        ax.text(
+            75.5,
+            68,
+            "C",
+            fontsize=26,
+            fontweight="bold",
+            color="#e0b000"
+        )
+
+        ax.text(
+            79.8,
+            68,
+            "B",
+            fontsize=26,
+            fontweight="bold",
+            color="#7fc942"
+        )
+
+        ax.text(
+            84.2,
+            68,
+            "A",
+            fontsize=26,
+            fontweight="bold",
+            color="#00aa00"
+        )
+
+    # -------------------------------------------------
+    # Plot formatting
+    # -------------------------------------------------
+
+    ax.set_title(
+        title,
+        fontsize=20,
+        fontweight="bold"
+    )
+
+    ax.set_xlabel("Dust Pick-Up [%]")
+    ax.set_ylabel("Debris Pick-Up [%]")
+
+    ax.set_xlim(x_range)
+    ax.set_ylim(y_range)
+
+    ax.grid(True, alpha=0.3)
+
+    ax.legend()
+
+    return fig
 
 # =====================================================
 # PRODUCT TYPE
@@ -311,7 +493,7 @@ if power_type == "Cordless":
     with b1:
 
         battery_efficiency = st.number_input(
-            "Battery Efficiency",
+            "Battery Efficiency [%]",
             value=0.90,
             step=0.01
         )
@@ -319,7 +501,7 @@ if power_type == "Cordless":
     with b2:
 
         charger_efficiency = st.number_input(
-            "Charger Efficiency",
+            "Charger Efficiency [%]",
             value=0.90,
             step=0.01
         )
@@ -340,7 +522,7 @@ with p1:
     st.subheader("Carpet")
 
     mfu_carpet = st.slider(
-        "MFU Carpet",
+        "MFU power Carpet [W]",
         0,
         1000,
         400
@@ -349,7 +531,7 @@ with p1:
     if power_type == "Cordless":
 
         nozzle_carpet = st.slider(
-            "Nozzle Carpet",
+            "Nozzle power Carpet [W]",
             0,
             300,
             50
@@ -360,7 +542,7 @@ with p1:
         nozzle_carpet = 0
 
         st.slider(
-            "Nozzle Carpet",
+            "Nozzle power Carpet [W]",
             0,
             300,
             0,
@@ -368,7 +550,7 @@ with p1:
         )
 
     dcpm_carpet = st.slider(
-        "DCPM Carpet",
+        "DCPM power Carpet [W]",
         0,
         100,
         10
@@ -376,28 +558,31 @@ with p1:
 
     clogging_carpet = (
         st.slider(
-            "Clogging Carpet (%)",
+            "Clogging Carpet [%]",
             0,
             100,
-            10
+            10,
+            help="""Input power added on carpet due to clogging performance drop"""
         ) / 100
     )
 
     dpu_carpet = (
         st.slider(
-            "Dust Pick-Up Carpet (%)",
+            "Dust Pick-Up Carpet [%]",
             70,
             100,
-            80
+            80,
+            help="""3 DS Wilton carpet dust pick up"""
         ) / 100
     )
 
     debris_carpet = (
         st.slider(
-            "Debris Pick-Up Carpet (%)",
+            "Debris Pick-Up Carpet [%]",
             45,
             100,
-            90
+            90,
+            help="""3 DS FS/BS average debris pick up on carpet"""
         ) / 100
     )
 
@@ -406,7 +591,7 @@ with p2:
     st.subheader("Hard Floor")
 
     mfu_hardfloor = st.slider(
-        "MFU Hard Floor",
+        "MFU power Hard Floor [W]",
         0,
         1000,
         280
@@ -415,7 +600,7 @@ with p2:
     if power_type == "Cordless":
 
         nozzle_hardfloor = st.slider(
-            "Nozzle Hard Floor",
+            "Nozzle power Hard Floor [W]",
             0,
             300,
             10
@@ -426,7 +611,7 @@ with p2:
         nozzle_hardfloor = 0
 
         st.slider(
-            "Nozzle Hard Floor",
+            "Nozzle power Hard Floor [W]",
             0,
             300,
             0,
@@ -434,7 +619,7 @@ with p2:
         )
 
     dcpm_hardfloor = st.slider(
-        "DCPM Hard Floor",
+        "DCPM power Hard Floor [W]",
         0,
         100,
         10
@@ -442,28 +627,31 @@ with p2:
 
     clogging_hardfloor = (
         st.slider(
-            "Clogging Hard Floor (%)",
+            "Clogging Hard Floor [%]",
             0,
             100,
-            0
+            10,
+            help="""Input power added on hardfloor due to clogging performance drop"""
         ) / 100
     )
 
     dpu_hardfloor = (
         st.slider(
-            "Dust Pick-Up Hard Floor (%)",
+            "Dust Pick-Up Hard Floor [%]",
             95,
             115,
-            105
+            105,
+            help="""3 DS dust removal from crevice"""
         ) / 100
     )
 
     debris_hardfloor = (
         st.slider(
-            "Debris Pick-Up Hard Floor (%)",
+            "Debris Pick-Up Hard Floor [%]",
             45,
             100,
-            90
+            90,
+            help="""3 DS FS/BS average debris pick up on hardfloor"""
         ) / 100
     )
 
@@ -611,15 +799,15 @@ p1, p2, p3 = st.columns(3)
 
 with p1:
     st.metric(
-        "CP Carpet (Grade A)",
-        f"{cp_carpet:.1f}"
+        "CP Carpet",
+        f"{cp_carpet:.1f} %"
     )
 
 
 with p2:
     st.metric(
         "CP Hard Floor",
-        f"{cp_hardfloor:.1f}",
+        f"{cp_hardfloor:.1f} %",
     )
 
 with p3:
@@ -737,6 +925,48 @@ st.markdown(
 )
 
 # =====================================================
+# PERFORMANCE MAPS
+# =====================================================
+
+st.header("Performance Maps")
+
+c1, c2 = st.columns(2)
+
+with c1:
+
+    carpet_fig = performance_map(
+        title="Carpet Performance Grade",
+        current_dpu=dpu_carpet * 100,
+        current_debris=debris_carpet * 100,
+        boundaries={
+            "A": 81,
+            "B": 77,
+            "C": 72,
+        },
+        x_range=(70, 86),
+        y_range=(45, 100),
+    )
+
+    st.pyplot(carpet_fig)
+
+with c2:
+
+    hardfloor_fig = performance_map(
+        title="Hard Floor Performance Grade",
+        current_dpu=dpu_hardfloor * 100,
+        current_debris=debris_hardfloor * 100,
+        boundaries={
+            "A": 106,
+            "B": 101,
+            "C": 95,
+        },
+        x_range=(95, 115),
+        y_range=(45, 100),
+    )
+
+    st.pyplot(hardfloor_fig)
+
+# =====================================================
 # TECHNICAL DETAILS
 # =====================================================
 
@@ -754,7 +984,7 @@ with st.expander("Technical Details"):
 
 st.info(
     """
-    Version 0.9.0 | Last updated: 2026-10-08
+    Version 0.9.1 | Last updated: 2026-10-09
 
     Author: Christoffer Sörmark
     """
