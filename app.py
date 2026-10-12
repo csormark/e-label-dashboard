@@ -11,8 +11,13 @@ from reportlab.platypus import (
     Spacer,
     Table,
     TableStyle,
+    PageBreak,
 )
 from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Image
+
+
+from datetime import datetime
 
 from calculations import (
     calculate_power,
@@ -430,15 +435,66 @@ def performance_map(
 # =====================================================
 
 
+
+def report_grade_color(grade):
+
+    colors_map = {
+        "A": colors.HexColor("#00A651"),
+        "B": colors.HexColor("#8BC34A"),
+        "C": colors.HexColor("#FFD54F"),
+        "D": colors.HexColor("#FF7043"),
+        "E": colors.HexColor("#FFB74D"),
+        "F": colors.HexColor("#FF7043"),
+        "G": colors.HexColor("#D32F2F"),
+    }
+
+    return colors_map.get(
+        grade,
+        colors.lightgrey
+    )
+
+
 def create_pdf_report(
+
+    platform_name,
+    model_name,
+    model_code,
+    report_by,
+    info_field,
+    comments,
+
     power_type,
+
+    nozzle_width,
+    maintenance_power,
+    dcpm_power,
+
+    battery_efficiency,
+    charger_efficiency,
+
+    mfu_carpet,
+    nozzle_carpet,
+    clogging_carpet,
+    dpu_carpet,
+    debris_carpet,
+    sound_carpet,
+
+    mfu_hardfloor,
+    nozzle_hardfloor,
+    clogging_hardfloor,
+    dpu_hardfloor,
+    debris_hardfloor,
+    sound_hardfloor,
+
     eei,
     ae,
     cp_factor,
+
     grade,
     carpet_class,
     hardfloor_class,
     sound_class,
+
     cp_carpet,
     cp_hardfloor,
     sound_gp,
@@ -455,42 +511,291 @@ def create_pdf_report(
 
     elements = []
 
-    title = Paragraph(
-        "Vacuum Cleaner E-Label Assessment Report",
-        styles["Title"]
+    # =================================================
+    # TITLE
+    # =================================================
+
+    elements.append(
+        Paragraph(
+            "Vacuum Cleaner E-Label Assessment Report",
+            styles["Title"]
+        )
     )
 
-    elements.append(title)
+    elements.append(
+        Paragraph(
+            datetime.now().strftime(
+                "Generated: %Y-%m-%d %H:%M"
+            ),
+            styles["BodyText"]
+        )
+    )
 
     elements.append(Spacer(1, 12))
 
-    summary_data = [
-        ["Metric", "Value"],
+    # =================================================
+    # CONCEPT INFORMATION
+    # =================================================
+
+    elements.append(
+        Paragraph(
+            "Concept Information",
+            styles["Heading2"]
+        )
+    )
+
+    concept_data = [
+
+        ["Field", "Value"],
+
+        ["Platform", platform_name],
+        ["Model", model_name],
+        ["Model Code", model_code],
+        ["Report By", report_by],
+        ["Additional Info", info_field],
+    ]
+
+    if comments.strip():
+
+        concept_data.append(
+            ["Comments", comments]
+        )
+
+    concept_table = Table(
+        concept_data,
+        colWidths=[120, 320],
+        hAlign="LEFT"
+    )
+
+    concept_table.setStyle(
+        TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ])
+    )
+
+    elements.append(concept_table)
+
+    elements.append(
+        Spacer(1, 12)
+    )
+
+    # =================================================
+    # INPUT PARAMETERS
+    # =================================================
+
+    elements.append(
+        Paragraph(
+            "Input Parameters",
+            styles["Heading2"]
+        )
+    )
+
+    general_data = [
+
+        ["GENERAL", ""],
+
         ["Product Type", power_type],
+        ["Nozzle Width", f"{nozzle_width} mm"],
+        ["Maintenance Power", f"{maintenance_power:.1f} W"],
+        ["Battery Efficiency", f"{battery_efficiency:.0%}"],
+        ["Charger Efficiency", f"{charger_efficiency:.0%}"],
+    ]
+
+    general_table = Table(
+        general_data,
+        colWidths=[130, 80]
+    )
+
+    general_table.setStyle(
+        TableStyle([
+            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+
+            ("BACKGROUND", (0, 0), (1, 0), colors.lightgrey),
+            ("SPAN", (0, 0), (1, 0)),
+
+            ("FONTNAME", (0, 0), (1, 0), "Helvetica-Bold"),
+            ("ALIGN", (0, 0), (1, 0), "CENTER"),
+        ])
+    )
+    power_data = [
+
+        ["POWER", ""],
+
+        ["MFU Carpet", f"{mfu_carpet:.0f} W"],
+        ["Nozzle Carpet", f"{nozzle_carpet:.0f} W"],
+
+        ["MFU Hard Floor", f"{mfu_hardfloor:.0f} W"],
+        ["Nozzle Hard Floor", f"{nozzle_hardfloor:.0f} W"],
+
+        ["DCPM Power", f"{dcpm_power:.0f} W"],
+    ]
+
+    power_table = Table(
+        power_data,
+        colWidths=[130, 80]
+    )
+
+    power_table.setStyle(
+        TableStyle([
+            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+
+            ("BACKGROUND", (0, 0), (1, 0), colors.lightgrey),
+            ("SPAN", (0, 0), (1, 0)),
+
+            ("FONTNAME", (0, 0), (1, 0), "Helvetica-Bold"),
+            ("ALIGN", (0, 0), (1, 0), "CENTER"),
+        ])
+    )
+
+    performance_data = [
+
+    ["PERFORMANCE", ""],
+
+    ["Carpet Clogging", f"{clogging_carpet*100:.0f}%"],
+    ["Hard Floor Clogging", f"{clogging_hardfloor*100:.0f}%"],
+
+    ["DPU Carpet", f"{dpu_carpet*100:.0f}%"],
+    ["Debris Carpet", f"{debris_carpet*100:.0f}%"],
+
+    ["DPU Hard Floor", f"{dpu_hardfloor*100:.0f}%"],
+    ["Debris Hard Floor", f"{debris_hardfloor*100:.0f}%"],
+    ]
+
+    performance_table = Table(
+        performance_data,
+        colWidths=[130, 80]
+    )
+
+    performance_table.setStyle(
+        TableStyle([
+            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+
+            ("BACKGROUND", (0, 0), (1, 0), colors.lightgrey),
+            ("SPAN", (0, 0), (1, 0)),
+
+            ("FONTNAME", (0, 0), (1, 0), "Helvetica-Bold"),
+            ("ALIGN", (0, 0), (1, 0), "CENTER"),
+        ])
+    )
+
+    sound_data = [
+
+        ["SOUND", ""],
+
+        ["Carpet", f"{sound_carpet:.0f} dBA"],
+        ["Hard Floor", f"{sound_hardfloor:.0f} dBA"],
+    ]
+
+    sound_table = Table(
+        sound_data,
+        colWidths=[130, 80]
+    )
+
+    sound_table.setStyle(
+        TableStyle([
+            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+
+            ("BACKGROUND", (0, 0), (1, 0), colors.lightgrey),
+            ("SPAN", (0, 0), (1, 0)),
+
+            ("FONTNAME", (0, 0), (1, 0), "Helvetica-Bold"),
+            ("ALIGN", (0, 0), (1, 0), "CENTER"),
+        ])
+    )
+
+    input_layout = Table(
+        [
+            [general_table, performance_table],
+            [power_table, sound_table]
+        ],
+        colWidths=[250, 250]
+    )
+
+    input_layout.setStyle(
+        TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ])
+    )
+
+    elements.append(input_layout)
+
+    elements.append(PageBreak())
+
+    elements.append(
+        Paragraph(
+            "Energy results",
+            styles["Heading2"]
+        )
+    )
+
+    elements.append(Spacer(1, 8))
+    
+    results_data = [
+        ["Result", "Value"],
         ["Energy Class", grade],
         ["EEI", f"{eei:.1f}"],
         ["AE", f"{ae:.1f} kWh/a"],
         ["CP Factor", f"{cp_factor:.6f}"],
     ]
 
-    summary_table = Table(
-        summary_data,
-        colWidths=[200, 200]
+    results_table = Table(
+        results_data,
+        colWidths=[280, 120],
+        hAlign="LEFT"
     )
 
-    summary_table.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-                ("GRID", (0, 0), (-1, -1), 1, colors.black),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ]
+    results_table.setStyle(
+        TableStyle([
+
+            ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+
+            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+
+            # Energy class color
+
+            (
+                "BACKGROUND",
+                (1, 1),
+                (1, 1),
+                report_grade_color(grade)
+            ),
+
+            (
+                "TEXTCOLOR",
+                (1, 1),
+                (1, 1),
+                colors.white
+            ),
+
+            (
+                "FONTNAME",
+                (1, 1),
+                (1, 1),
+                "Helvetica-Bold"
+            ),
+
+        ])
+)
+
+    elements.append(results_table)
+
+    elements.append(Spacer(1, 8))
+
+    # =================================================
+    # PERFORMANCE GRADES
+    # =================================================
+
+    elements.append(
+        Paragraph(
+            "Performance Grades",
+            styles["Heading2"]
         )
     )
-
-    elements.append(summary_table)
-
-    elements.append(Spacer(1, 15))
 
     grades_data = [
         ["Category", "Grade", "Value"],
@@ -501,39 +806,80 @@ def create_pdf_report(
 
     grades_table = Table(
         grades_data,
-        colWidths=[150, 100, 150]
+        colWidths=[280, 80, 120],
+        hAlign="LEFT"
     )
 
-    grades_table.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-                ("GRID", (0, 0), (-1, -1), 1, colors.black),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ]
-        )
-    )
+    grades_style = TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+
+        ("BACKGROUND", (1, 1), (1, 1),
+         report_grade_color(carpet_class)),
+
+        ("BACKGROUND", (1, 2), (1, 2),
+         report_grade_color(hardfloor_class)),
+
+        ("BACKGROUND", (1, 3), (1, 3),
+         report_grade_color(sound_class)),
+
+        ("TEXTCOLOR", (1, 1), (1, 3), colors.white),
+
+        ("ALIGN", (1, 1), (1, 3), "CENTER"),
+
+        ("FONTNAME", (1, 1), (1, 3),
+         "Helvetica-Bold"),
+    ])
+
+    grades_table.setStyle(grades_style)
+
+    elements.append(grades_table)
+
+    elements.append(PageBreak())
+
+    # =================================================
+    # PERFORMANCE MAPS
+    # =================================================
 
     elements.append(
         Paragraph(
-            "Performance Summary",
+            "Performance Maps",
             styles["Heading2"]
         )
     )
 
-    elements.append(grades_table)
+    elements.append(
+        Paragraph(
+            "Carpet Performance Map",
+            styles["Heading3"]
+        )
+    )
 
-    elements.append(Spacer(1, 15))
+    elements.append(
+        Image(
+            "carpet_map.png",
+            width=300,
+            height=220
+        )
+    )
+
+    elements.append(
+        Spacer(1, 10)
+    )
 
     elements.append(
         Paragraph(
-            f"""
-            Current Energy Class: <b>{grade}</b><br/>
-            EEI: <b>{eei:.1f}</b><br/>
-            Annual Energy Consumption: <b>{ae:.1f} kWh/a</b><br/>
-            CP Factor: <b>{cp_factor:.6f}</b>
-            """,
-            styles["BodyText"]
+            "Hard Floor Performance Map",
+            styles["Heading3"]
+        )
+    )
+
+    elements.append(
+        Image(
+            "hardfloor_map.png",
+            width=300,
+            height=220
         )
     )
 
@@ -544,110 +890,6 @@ def create_pdf_report(
     buffer.close()
 
     return pdf
-
-    # -------------------------------------------------
-    # Grade labels
-    # -------------------------------------------------
-
-    if boundaries["A"] == 106:
-        # Hard Floor
-
-        ax.text(
-            96.0,
-            68,
-            "D",
-            fontsize=26,
-            fontweight="bold",
-            color="#ff5500"
-        )
-
-        ax.text(
-            100.0,
-            68,
-            "C",
-            fontsize=26,
-            fontweight="bold",
-            color="#e0b000"
-        )
-
-        ax.text(
-            104.0,
-            68,
-            "B",
-            fontsize=26,
-            fontweight="bold",
-            color="#7fc942"
-        )
-
-        ax.text(
-            108.5,
-            68,
-            "A",
-            fontsize=26,
-            fontweight="bold",
-            color="#00aa00"
-        )
-
-    else:
-        # Carpet
-
-        ax.text(
-            71.0,
-            68,
-            "D",
-            fontsize=26,
-            fontweight="bold",
-            color="#ff5500"
-        )
-
-        ax.text(
-            75.5,
-            68,
-            "C",
-            fontsize=26,
-            fontweight="bold",
-            color="#e0b000"
-        )
-
-        ax.text(
-            79.8,
-            68,
-            "B",
-            fontsize=26,
-            fontweight="bold",
-            color="#7fc942"
-        )
-
-        ax.text(
-            84.2,
-            68,
-            "A",
-            fontsize=26,
-            fontweight="bold",
-            color="#00aa00"
-        )
-
-    # -------------------------------------------------
-    # Plot formatting
-    # -------------------------------------------------
-
-    ax.set_title(
-        title,
-        fontsize=20,
-        fontweight="bold"
-    )
-
-    ax.set_xlabel("Dust Pick-Up [%]")
-    ax.set_ylabel("Debris Pick-Up [%]")
-
-    ax.set_xlim(x_range)
-    ax.set_ylim(y_range)
-
-    ax.grid(True, alpha=0.3)
-
-    ax.legend()
-
-    return fig
 
 # =====================================================
 # PRODUCT TYPE
@@ -673,16 +915,16 @@ st.divider()
 
 with st.expander("General Settings", expanded=True):
 
-  c1, c2, c3 = st.columns(3)
+    c1, c2, c3 = st.columns(3)
 
-with c1:
+    with c1:
 
         nozzle_width = st.number_input(
             "Nozzle Width [mm]",
             value=250 if power_type == "Cordless" else 280
         )
 
-with c2:
+    with c2:
 
         if power_type == "Cordless":
 
@@ -702,14 +944,14 @@ with c2:
                 disabled=True
             )
 
-with c3:
+    with c3:
 
         dcpm_power = st.number_input(
             "DCPM Power [W]",
             value=10,
-            step=1
-    )
-
+            step=1,
+            help="Shared DCPM power consumption used for both Carpet and Hard Floor calculations."
+        )
 # =====================================================
 # BATTERY
 # =====================================================
@@ -783,7 +1025,7 @@ with p1:
             "Clogging Carpet [%]",
             0,
             50,
-            10,
+            0,
             help="""Input power added on carpet due to clogging performance drop"""
         ) / 100
     )
@@ -846,7 +1088,7 @@ with p2:
             "Clogging Hard Floor [%]",
             0,
             50,
-            10,
+            0,
             help="""Input power added on hardfloor due to clogging performance drop"""
         ) / 100
     )
@@ -1202,23 +1444,111 @@ with c2:
     st.pyplot(hardfloor_fig)
 
 
-## GENERATE REPORT
+
+# =====================================================
+# REPORT INFORMATION
+# =====================================================
+
+st.subheader("Export")
+
+with st.expander("Report Information", expanded=True):
+
+    c1, c2 = st.columns(2)
+
+    with c1:
+        platform_name = st.text_input(
+            "Platform",
+            value=""
+        )
+
+        model_name = st.text_input(
+            "Model",
+            value=""
+        )
+
+        model_code = st.text_input(
+            "Model Code",
+            value=""
+        )
+
+    with c2:
+        report_by = st.text_input(
+            "Report by",
+            value=""
+        )
+
+        info_field = st.text_input(
+            "Additional info",
+            value=""
+        )
+
+        comments = st.text_area(
+            "Comments",
+            value="",
+            height=80
+        )
+
+
+# =====================================================
+# GENERATE REPORT
+# =====================================================
+
+carpet_fig.savefig(
+    "carpet_map.png",
+    bbox_inches="tight"
+)
+
+hardfloor_fig.savefig(
+    "hardfloor_map.png",
+    bbox_inches="tight"
+)
 
 pdf_report = create_pdf_report(
+
+    platform_name=platform_name,
+    model_name=model_name,
+    model_code=model_code,
+    report_by=report_by,
+    info_field=info_field,
+    comments=comments,
+
     power_type=power_type,
+
+    nozzle_width=nozzle_width,
+    maintenance_power=maintenance_power,
+    dcpm_power=dcpm_power,
+
+    battery_efficiency=battery_efficiency,
+    charger_efficiency=charger_efficiency,
+
+    mfu_carpet=mfu_carpet,
+    nozzle_carpet=nozzle_carpet,
+    clogging_carpet=clogging_carpet,
+    dpu_carpet=dpu_carpet,
+    debris_carpet=debris_carpet,
+    sound_carpet=sound_carpet,
+
+    mfu_hardfloor=mfu_hardfloor,
+    nozzle_hardfloor=nozzle_hardfloor,
+    clogging_hardfloor=clogging_hardfloor,
+    dpu_hardfloor=dpu_hardfloor,
+    debris_hardfloor=debris_hardfloor,
+    sound_hardfloor=sound_hardfloor,
+
     eei=eei,
     ae=ae,
     cp_factor=cp_factor,
+
     grade=grade,
     carpet_class=carpet_class,
     hardfloor_class=hardfloor_class,
     sound_class=sound_class,
+
     cp_carpet=cp_carpet,
     cp_hardfloor=cp_hardfloor,
     sound_gp=sound_gp,
 )
 
-st.subheader("Export")
 
 st.download_button(
     label="📄 Download PDF Report",
@@ -1226,73 +1556,6 @@ st.download_button(
     file_name="e_label_report.pdf",
     mime="application/pdf"
 )
-
-# =====================================================
-# CALCULATION CONSTANTS
-# =====================================================
-
-with st.expander("Calculation Constants"):
-
-    st.markdown("""
-### Energy and Performance Constants
-
-- **General Purpose weighting**
-  - Hard Floor: **75%**
-  - Carpet: **25%**
-
-- **Cleaning Performance weighting**
-  - Dust Pick-Up (DPU): **90%**
-  - Debris Pick-Up: **10%**
-
-- **Standard Annual Energy (SAE)**
-  - **36 kWh/year**
-
-- **Minimum Cleaning Performance Reference (CPmin)**
-  - **0.84375**
-  - Corresponds to:
-    - Debris Carpet: **45%**
-    - Debris Hard Floor: **45%**
-    - DPU Carpet: **70%**
-    - DPU Hard Floor: **95%**
-
-### Key Equations
-
-**CP Carpet**
-
-CPc = (0.9 × DPUc + 0.1 × DEBc) × 100
-
-**CP Hard Floor**
-
-CPhf = (0.9 × DPUhf + 0.1 × DEBhf) × 100
-
-**CP General Purpose**
-
-CPgp = (0.25 × CPc + 0.75 × CPhf) / 100
-
-**CP Factor**
-
-CPfactor = 0.84375 / (0.66 × 0.84375 + 0.33 × CPgp)
-
-**EEI**
-
-EEI = (AE / 36) × CPfactor × 100
-""")
-
-# =====================================================
-# TECHNICAL DETAILS
-# =====================================================
-
-with st.expander("Technical Details"):
-
-    st.json({
-        "AE": round(ae, 2),
-        "EEI": round(eei, 2),
-        "CP Carpet": round(cp_carpet, 2),
-        "CP Hard Floor": round(cp_hardfloor, 2),
-        "CP GP": round(cpgp, 5),
-        "CP Factor": round(cp_factor, 8),
-        "Sound GP": round(sound_gp, 2),
-    })
 
 st.info(
     """
