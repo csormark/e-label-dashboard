@@ -1559,7 +1559,7 @@ st.download_button(
 
 st.info(
     """
-    Version 0.9.3 | Last updated: 2026-10-09
+    Version 0.9.4 | Last updated: 2026-10-12
 
     Author: Christoffer Sörmark
     """
