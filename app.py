@@ -277,12 +277,18 @@ def energy_grade_gauge(active_grade):
 
 def performance_map(
     title,
-    current_dpu,
-    current_debris,
+    current_x,
+    current_y,
     boundaries,
     x_range,
     y_range,
+    x_label,
+    y_label,
+    x_weight,
+    y_weight,
+    label_positions,
 ):
+
     fig, ax = plt.subplots(figsize=(8, 6))
 
     x = np.linspace(x_range[0], x_range[1], 200)
@@ -297,9 +303,9 @@ def performance_map(
     y_top = y_range[1]
     y_bottom = y_range[0]
 
-    y_c = (boundaries["C"] - 0.9 * x) / 0.1
-    y_b = (boundaries["B"] - 0.9 * x) / 0.1
-    y_a = (boundaries["A"] - 0.9 * x) / 0.1
+    y_c = (boundaries["C"] - x_weight * x) / y_weight
+    y_b = (boundaries["B"] - x_weight * x) / y_weight
+    y_a = (boundaries["A"] - x_weight * x) / y_weight
 
     ax.fill_between(
         x, y_bottom, y_c,
@@ -330,8 +336,8 @@ def performance_map(
     ax.plot(x, y_a, color="#00aa33", linewidth=2)
 
     ax.scatter(
-        current_dpu,
-        current_debris,
+        current_x,
+        current_y,
         marker="X",
         s=200,
         color="red",
@@ -340,77 +346,27 @@ def performance_map(
         label="Current Product"
     )
 
-    # -------------------------------------------------
+    # ---------------------------------------------
     # Grade labels
-    # -------------------------------------------------
+    # ---------------------------------------------
 
-    if boundaries["A"] == 106:
+    for grade, (x_pos, y_pos) in label_positions.items():
 
-        # Hard Floor
-
-        ax.text(
-            96.0, 68, "D",
-            fontsize=26,
-            fontweight="bold",
-            color="#ff5500"
-        )
+        grade_colors = {
+            "A": "#00aa00",
+            "B": "#7fc942",
+            "C": "#e0b000",
+            "D": "#ff5500",
+        }
 
         ax.text(
-            100.0, 68, "C",
+            x_pos,
+            y_pos,
+            grade,
             fontsize=26,
             fontweight="bold",
-            color="#e0b000"
+            color=grade_colors[grade]
         )
-
-        ax.text(
-            104.0, 68, "B",
-            fontsize=26,
-            fontweight="bold",
-            color="#7fc942"
-        )
-
-        ax.text(
-            108.5, 68, "A",
-            fontsize=26,
-            fontweight="bold",
-            color="#00aa00"
-        )
-
-    else:
-
-        # Carpet
-
-        ax.text(
-            71.0, 68, "D",
-            fontsize=26,
-            fontweight="bold",
-            color="#ff5500"
-        )
-
-        ax.text(
-            75.5, 68, "C",
-            fontsize=26,
-            fontweight="bold",
-            color="#e0b000"
-        )
-
-        ax.text(
-            79.8, 68, "B",
-            fontsize=26,
-            fontweight="bold",
-            color="#7fc942"
-        )
-
-        ax.text(
-            84.2, 68, "A",
-            fontsize=26,
-            fontweight="bold",
-            color="#00aa00"
-        )
-
-    # -------------------------------------------------
-    # Plot formatting
-    # -------------------------------------------------
 
     ax.set_title(
         title,
@@ -418,11 +374,132 @@ def performance_map(
         fontweight="bold"
     )
 
-    ax.set_xlabel("Dust Pick-Up [%]")
-    ax.set_ylabel("Debris Pick-Up [%]")
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
 
     ax.set_xlim(x_range)
     ax.set_ylim(y_range)
+
+    ax.grid(True, alpha=0.3)
+
+    ax.legend()
+
+    return fig
+
+def sound_map(
+    sound_carpet,
+    sound_hardfloor,
+):
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+
+    x = np.linspace(55, 85, 200)
+
+    y_a = (68 - 0.75 * x) / 0.25
+    y_b = (74 - 0.75 * x) / 0.25
+    y_c = (77 - 0.75 * x) / 0.25
+
+    ax.fill_between(
+        x,
+        55,
+        y_a,
+        color="#97d397",    # A
+        alpha=0.8,
+    )
+
+    ax.fill_between(
+        x,
+        y_a,
+        y_b,
+        color="#bfdcbf",    # B
+        alpha=0.8,
+    )
+
+    ax.fill_between(
+        x,
+        y_b,
+        y_c,
+        color="#eef0c5",    # C
+        alpha=0.8,
+    )
+
+    ax.fill_between(
+        x,
+        y_c,
+        85,
+        color="#e9e5c4",    # D
+        alpha=0.8,
+    )
+
+    ax.plot(x, y_a, color="#00aa33", linewidth=3)
+    ax.plot(x, y_b, color="#3ae000", linewidth=3)
+    ax.plot(x, y_c, color="#f0b400", linewidth=3)
+
+    ax.scatter(
+        sound_hardfloor,
+        sound_carpet,
+        color="red",
+        marker="X",
+        s=250,
+        edgecolor="black",
+        zorder=10,
+        label="Current Product",
+    )
+
+    # Grade labels
+
+    ax.text(
+        62.5,
+        70,
+        "A",
+        fontsize=28,
+        fontweight="bold",
+        color="#00aa33",
+    )
+
+    ax.text(
+        72,
+        70,
+        "B",
+        fontsize=28,
+        fontweight="bold",
+        color="#7fc942",
+    )
+
+    ax.text(
+        77,
+        70,
+        "C",
+        fontsize=28,
+        fontweight="bold",
+        color="#d4aa00",
+    )
+
+    ax.text(
+        82,
+        70,
+        "D",
+        fontsize=28,
+        fontweight="bold",
+        color="#ff5500",
+    )
+
+    ax.set_title(
+        "Sound Grade",
+        fontsize=20,
+        fontweight="bold",
+    )
+
+    ax.set_xlabel(
+        "Hard Floor Sound [dBA]"
+    )
+
+    ax.set_ylabel(
+        "Carpet Sound [dBA]"
+    )
+
+    ax.set_xlim(55, 85)
+    ax.set_ylim(55, 85)
 
     ax.grid(True, alpha=0.3)
 
@@ -883,6 +960,23 @@ def create_pdf_report(
         )
     )
 
+    elements.append(PageBreak())
+
+    elements.append(
+        Paragraph(
+            "Sound Map",
+            styles["Heading3"]
+        )
+    )
+
+    elements.append(
+        Image(
+            "sound_map.png",
+            width=300,
+            height=220
+        )
+    )
+   
     doc.build(elements)
 
     pdf = buffer.getvalue()
@@ -1413,15 +1507,31 @@ with c1:
 
     carpet_fig = performance_map(
         title="Carpet Performance Grade",
-        current_dpu=dpu_carpet * 100,
-        current_debris=debris_carpet * 100,
+
+        current_x=dpu_carpet * 100,
+        current_y=debris_carpet * 100,
+
         boundaries={
             "A": 81,
             "B": 77,
             "C": 72,
         },
+
         x_range=(70, 86),
         y_range=(45, 100),
+
+        x_label="Dust Pick-Up [%]",
+        y_label="Debris Pick-Up [%]",
+
+        x_weight=0.9,
+        y_weight=0.1,
+
+        label_positions={
+            "D": (71.0, 68),
+            "C": (75.5, 68),
+            "B": (79.8, 68),
+            "A": (84.2, 68),
+        },
     )
 
     st.pyplot(carpet_fig)
@@ -1430,20 +1540,43 @@ with c2:
 
     hardfloor_fig = performance_map(
         title="Hard Floor Performance Grade",
-        current_dpu=dpu_hardfloor * 100,
-        current_debris=debris_hardfloor * 100,
+
+        current_x=dpu_hardfloor * 100,
+        current_y=debris_hardfloor * 100,
+
         boundaries={
             "A": 106,
             "B": 101,
             "C": 95,
         },
+
         x_range=(95, 115),
         y_range=(45, 100),
+
+        x_label="Dust Pick-Up [%]",
+        y_label="Debris Pick-Up [%]",
+
+        x_weight=0.9,
+        y_weight=0.1,
+
+        label_positions={
+            "D": (96.0, 68),
+            "C": (101.0, 68),
+            "B": (107.5, 68),
+            "A": (112.5, 68),
+        },
     )
 
     st.pyplot(hardfloor_fig)
 
+st.subheader("Sound Map")
 
+sound_fig = sound_map(
+    sound_carpet,
+    sound_hardfloor,
+)
+
+st.pyplot(sound_fig)
 
 # =====================================================
 # REPORT INFORMATION
@@ -1503,6 +1636,11 @@ hardfloor_fig.savefig(
     bbox_inches="tight"
 )
 
+sound_fig.savefig(
+    "sound_map.png",
+    bbox_inches="tight"
+)
+
 pdf_report = create_pdf_report(
 
     platform_name=platform_name,
@@ -1559,8 +1697,8 @@ st.download_button(
 
 st.info(
     """
-    Version 0.9.5 | Last updated: 2026-10-13
+    Version 0.9.6 | Last updated: 2026-10-13
 
-    Author: Christoffer Sörmark
+    Author: CS
     """
 )
