@@ -129,21 +129,21 @@ def sound_margins(sound_db):
 
         return {
             "to_better": 0,
-            "to_worse": 74 - sound_db,
+            "to_worse": 68 - sound_db,
         }
 
     elif sound_db <= 74:
 
         return {
             "to_better": sound_db - 68,
-            "to_worse": 77 - sound_db,
+            "to_worse": 74 - sound_db,
         }
 
     elif sound_db <= 77:
 
         return {
             "to_better": sound_db - 74,
-            "to_worse": 78 - sound_db,
+            "to_worse": 77 - sound_db,
         }
 
     else:
@@ -1559,7 +1559,7 @@ st.download_button(
 
 st.info(
     """
-    Version 0.9.4 | Last updated: 2026-10-12
+    Version 0.9.5 | Last updated: 2026-10-13
 
     Author: Christoffer Sörmark
     """
