@@ -1004,6 +1004,12 @@ st.title("Vacuum Cleaner E-Label Dashboard")
 st.divider()
 
 # =====================================================
+# POWER OVERRIDE
+# =====================================================
+
+override_power = st.checkbox("Total power input")
+
+# =====================================================
 # GENERAL SETTINGS
 # =====================================================
 
@@ -1025,7 +1031,8 @@ with st.expander("General Settings", expanded=True):
             maintenance_power = st.number_input(
                 "Maintenance Power [W]",
                 value=0.3,
-                step=0.1
+                step=0.1,
+                disabled=override_power
             )
 
         else:
@@ -1044,8 +1051,10 @@ with st.expander("General Settings", expanded=True):
             "DCPM Power [W]",
             value=10,
             step=1,
+            disabled=override_power,
             help="Shared DCPM power consumption used for both Carpet and Hard Floor calculations."
         )
+
 # =====================================================
 # BATTERY
 # =====================================================
@@ -1059,7 +1068,8 @@ if power_type == "Cordless":
         battery_efficiency = st.number_input(
             "Battery Efficiency",
             value=0.90,
-            step=0.01
+            step=0.01,
+            disabled=override_power
         )
 
     with b2:
@@ -1067,7 +1077,8 @@ if power_type == "Cordless":
         charger_efficiency = st.number_input(
             "Charger Efficiency",
             value=0.90,
-            step=0.01
+            step=0.01,
+            disabled=override_power
         )
 
 else:
@@ -1089,7 +1100,8 @@ with p1:
         "MFU power Carpet [W]",
         0,
         750,
-        400
+        400,
+        disabled=override_power
     )
 
     if power_type == "Cordless":
@@ -1098,7 +1110,8 @@ with p1:
             "Nozzle power Carpet [W]",
             0,
             100,
-            50
+            50,
+            disabled=override_power
         )
 
     else:
@@ -1120,9 +1133,38 @@ with p1:
             0,
             50,
             0,
+            disabled=override_power,
             help="""Input power added on carpet due to clogging performance drop"""
         ) / 100
     )
+
+        # Calculated Carpet Power
+
+    calculated_carpet_power = calculate_power(
+        mfu_carpet,
+        nozzle_carpet,
+        dcpm_power,
+        clogging_carpet,
+        charger_efficiency,
+        battery_efficiency,
+    )
+
+    if override_power:
+
+        power_carpet = st.number_input(
+            "Total Carpet Power [W]",
+            value=round(calculated_carpet_power, 1),
+            step=1.0,
+        )
+
+    else:
+
+        power_carpet = calculated_carpet_power
+
+        st.metric(
+            "Total Carpet Power [W]",
+            f"{power_carpet:.1f}"
+        )
     
     dpu_carpet = (
         st.slider(
@@ -1144,6 +1186,7 @@ with p1:
         ) / 100
     )
 
+
 with p2:
 
     st.subheader("Hard Floor")
@@ -1152,7 +1195,8 @@ with p2:
         "MFU power Hard Floor [W]",
         0,
         750,
-        400
+        400,
+        disabled=override_power
     )
 
     if power_type == "Cordless":
@@ -1161,7 +1205,8 @@ with p2:
             "Nozzle power Hard Floor [W]",
             0,
             100,
-            10
+            10,
+            disabled=override_power
         )
 
     else:
@@ -1183,9 +1228,38 @@ with p2:
             0,
             50,
             0,
+            disabled=override_power,
             help="""Input power added on hardfloor due to clogging performance drop"""
         ) / 100
     )
+        # Calculated Hard Floor Power
+
+    calculated_hardfloor_power = calculate_power(
+        mfu_hardfloor,
+        nozzle_hardfloor,
+        dcpm_power,
+        clogging_hardfloor,
+        charger_efficiency,
+        battery_efficiency,
+    )
+
+    if override_power:
+
+        power_hardfloor = st.number_input(
+            "Total Hard Floor Power [W]",
+            value=round(calculated_hardfloor_power, 1),
+            step=1.0,
+        )
+
+    else:
+
+        power_hardfloor = calculated_hardfloor_power
+
+        st.metric(
+            "Total Hard Floor Power [W]",
+            f"{power_hardfloor:.1f}"
+        )
+
 
     dpu_hardfloor = (
         st.slider(
@@ -1206,6 +1280,7 @@ with p2:
             help="""3 DS FS/BS average debris pick up on hardfloor"""
         ) / 100
     )
+
 
 
 # =====================================================
@@ -1231,24 +1306,6 @@ with s2:
 # =====================================================
 # CALCULATIONS
 # =====================================================
-
-power_carpet = calculate_power(
-    mfu_carpet,
-    nozzle_carpet,
-    dcpm_power,
-    clogging_carpet,
-    charger_efficiency,
-    battery_efficiency,
-)
-
-power_hardfloor = calculate_power(
-    mfu_hardfloor,
-    nozzle_hardfloor,
-    dcpm_power,
-    clogging_hardfloor,
-    charger_efficiency,
-    battery_efficiency,
-)
 
 eon = calculate_eon(
     power_carpet,
@@ -1697,7 +1754,7 @@ st.download_button(
 
 st.info(
     """
-    Version 0.9.6 | Last updated: 2026-10-13
+    Version 0.9.7 | Last updated: 2026-10-13
 
     Author: CS
     """
