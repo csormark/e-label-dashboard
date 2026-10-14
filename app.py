@@ -548,7 +548,9 @@ def create_pdf_report(
 
     battery_efficiency,
     charger_efficiency,
-
+    power_carpet,
+    power_hardfloor,
+    
     mfu_carpet,
     nozzle_carpet,
     clogging_carpet,
@@ -647,7 +649,7 @@ def create_pdf_report(
     concept_table.setStyle(
         TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+            ("GRID", (0, 0), (-1, -1), 1, colors.lightgrey),
             ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
             ("ALIGN", (0, 0), (-1, -1), "LEFT"),
         ])
@@ -688,7 +690,7 @@ def create_pdf_report(
 
     general_table.setStyle(
         TableStyle([
-            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+            ("GRID", (0, 0), (-1, -1), 1, colors.lightgrey),
 
             ("BACKGROUND", (0, 0), (1, 0), colors.lightgrey),
             ("SPAN", (0, 0), (1, 0)),
@@ -698,17 +700,25 @@ def create_pdf_report(
         ])
     )
     power_data = [
+        ["Parameter", "Value"],
 
-        ["POWER", ""],
+        ["Total Carpet Power", f"{power_carpet:.1f} W"],
+        ["Total Hard Floor Power", f"{power_hardfloor:.1f} W"],
+
+        ["", ""],
 
         ["MFU Carpet", f"{mfu_carpet:.0f} W"],
         ["Nozzle Carpet", f"{nozzle_carpet:.0f} W"],
 
+        ["", ""],
+
         ["MFU Hard Floor", f"{mfu_hardfloor:.0f} W"],
         ["Nozzle Hard Floor", f"{nozzle_hardfloor:.0f} W"],
 
+        ["", ""],
+
         ["DCPM Power", f"{dcpm_power:.0f} W"],
-    ]
+]
 
     power_table = Table(
         power_data,
@@ -717,13 +727,15 @@ def create_pdf_report(
 
     power_table.setStyle(
         TableStyle([
-            ("GRID", (0, 0), (-1, -1), 1, colors.black),
 
-            ("BACKGROUND", (0, 0), (1, 0), colors.lightgrey),
-            ("SPAN", (0, 0), (1, 0)),
+            ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
 
-            ("FONTNAME", (0, 0), (1, 0), "Helvetica-Bold"),
-            ("ALIGN", (0, 0), (1, 0), "CENTER"),
+            ("FONTNAME", (0, 1), (1, 2), "Helvetica-Bold"),
+
+            ("BACKGROUND", (0, 1), (1, 2), colors.whitesmoke),
+
+            ("GRID", (0, 0), (-1, -1), 1, colors.lightgrey),
+
         ])
     )
 
@@ -748,7 +760,7 @@ def create_pdf_report(
 
     performance_table.setStyle(
         TableStyle([
-            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+            ("GRID", (0, 0), (-1, -1), 1, colors.lightgrey),
 
             ("BACKGROUND", (0, 0), (1, 0), colors.lightgrey),
             ("SPAN", (0, 0), (1, 0)),
@@ -773,7 +785,7 @@ def create_pdf_report(
 
     sound_table.setStyle(
         TableStyle([
-            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+            ("GRID", (0, 0), (-1, -1), 1, colors.lightgrey),
 
             ("BACKGROUND", (0, 0), (1, 0), colors.lightgrey),
             ("SPAN", (0, 0), (1, 0)),
@@ -829,7 +841,7 @@ def create_pdf_report(
 
             ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
 
-            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+            ("GRID", (0, 0), (-1, -1), 1, colors.lightgrey),
 
             ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
 
@@ -889,7 +901,7 @@ def create_pdf_report(
 
     grades_style = TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        ("GRID", (0, 0), (-1, -1), 1, colors.lightgrey),
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
 
         ("BACKGROUND", (1, 1), (1, 1),
@@ -986,6 +998,12 @@ def create_pdf_report(
     return pdf
 
 # =====================================================
+# HEADER
+# =====================================================
+
+st.title("Vacuum Cleaner E-Label Dashboard")
+
+# =====================================================
 # PRODUCT TYPE
 # =====================================================
 
@@ -994,14 +1012,6 @@ power_type = st.segmented_control(
     options=["Cordless", "Corded"],
     default="Cordless"
 )
-
-# =====================================================
-# HEADER
-# =====================================================
-
-st.title("Vacuum Cleaner E-Label Dashboard")
-
-st.divider()
 
 # =====================================================
 # POWER OVERRIDE
@@ -1031,8 +1041,7 @@ with st.expander("General Settings", expanded=True):
             maintenance_power = st.number_input(
                 "Maintenance Power [W]",
                 value=0.3,
-                step=0.1,
-                disabled=override_power
+                step=0.1
             )
 
         else:
@@ -1153,8 +1162,8 @@ with p1:
 
         power_carpet = st.number_input(
             "Total Carpet Power [W]",
-            value=round(calculated_carpet_power, 1),
-            step=1.0,
+            value=int(round(calculated_carpet_power)),
+            step=1,
         )
 
     else:
@@ -1163,8 +1172,9 @@ with p1:
 
         st.metric(
             "Total Carpet Power [W]",
-            f"{power_carpet:.1f}"
+            f"{power_carpet:.0f}"
         )
+        
     
     dpu_carpet = (
         st.slider(
@@ -1247,8 +1257,8 @@ with p2:
 
         power_hardfloor = st.number_input(
             "Total Hard Floor Power [W]",
-            value=round(calculated_hardfloor_power, 1),
-            step=1.0,
+            value=int(round(calculated_hardfloor_power)),
+            step=1,
         )
 
     else:
@@ -1257,7 +1267,7 @@ with p2:
 
         st.metric(
             "Total Hard Floor Power [W]",
-            f"{power_hardfloor:.1f}"
+            f"{power_hardfloor:.0f}"
         )
 
 
@@ -1302,6 +1312,8 @@ with s2:
         "Sound Hard Floor [dBA]",
         value=70
     )
+
+st.divider()
 
 # =====================================================
 # CALCULATIONS
@@ -1716,6 +1728,9 @@ pdf_report = create_pdf_report(
     battery_efficiency=battery_efficiency,
     charger_efficiency=charger_efficiency,
 
+    power_carpet=power_carpet,
+    power_hardfloor=power_hardfloor,
+
     mfu_carpet=mfu_carpet,
     nozzle_carpet=nozzle_carpet,
     clogging_carpet=clogging_carpet,
@@ -1754,7 +1769,7 @@ st.download_button(
 
 st.info(
     """
-    Version 0.9.7 | Last updated: 2026-10-13
+    Version 0.9.8 | Last updated: 2026-10-14
 
     Author: CS
     """
