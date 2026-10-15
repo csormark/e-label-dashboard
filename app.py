@@ -196,12 +196,16 @@ def eei_margins(eei):
 
         if lower <= eei < upper:
 
+            band_width = upper - lower
+
             return {
                 "current": grade,
                 "better": None if grade == "A" else lower,
                 "worse": upper,
                 "to_better": 0 if grade == "A" else eei - lower,
                 "to_worse": upper - eei,
+                "band_width": band_width,
+                "lower": lower,
             }
 
 
@@ -1374,6 +1378,12 @@ carpet_class = carpet_grade(cp_carpet)
 hardfloor_class = hardfloor_grade(cp_hardfloor)
 sound_class = sound_grade(sound_gp)
 eei_margin = eei_margins(eei)
+
+eei_margin_pct = (
+    eei_margin["to_worse"]
+    / eei
+    * 100
+)
 carpet_margin = carpet_margins(cp_carpet)
 hardfloor_margin = hardfloor_margins(cp_hardfloor)
 sound_margin = sound_margins(sound_gp)
@@ -1470,7 +1480,7 @@ with m1:
 
     st.metric(
         "Margin to worse grade",
-        f"{eei_margin['to_worse']:.2f}"
+        f"{eei_margin['to_worse']:.2f} ({eei_margin_pct:.0f}%)"
     )
 
 with m2:

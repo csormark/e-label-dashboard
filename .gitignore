@@ -1,3 +1,11 @@
 __pycache__/
 *.pyc
 .streamlit/
+
+# Generated report images
+carpet_map.png
+hardfloor_map.png
+sound_map.png
+
+# VS Code
+.vscode/
