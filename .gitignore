@@ -3,6 +3,7 @@ __pycache__/
 .streamlit/
 
 # Generated report images
+eei_scale.png
 carpet_map.png
 hardfloor_map.png
 sound_map.png

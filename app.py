@@ -279,6 +279,96 @@ def energy_grade_gauge(active_grade):
                 unsafe_allow_html=True,
             )
 
+def eei_scale(eei):
+
+    fig, ax = plt.subplots(figsize=(10, 1.5))
+
+    bands = [
+        (0, 30, "#00A651"),   # A
+        (30, 42, "#4CAF50"),  # B
+        (42, 54, "#8BC34A"),  # C
+        (54, 66, "#FFD54F"),  # D
+        (66, 78, "#FFB74D"),  # E
+        (78, 90, "#FF7043"),  # F
+        (90, 100, "#D32F2F"), # G
+    ]
+
+    for start, end, color in bands:
+
+        ax.axvspan(
+            start,
+            end,
+            color=color,
+            alpha=0.9,
+        )
+
+    # EEI marker
+
+    ax.axvline(
+        eei,
+        color="black",
+        linewidth=4,
+        zorder=10,
+    )
+
+    ax.text(
+        eei + 4,
+        1.22,
+        f"EEI = {eei:.1f}",
+        fontsize=10,
+        fontweight="bold",
+        bbox=dict(
+            facecolor="white",
+            edgecolor="black",
+            boxstyle="round,pad=0.25"
+        ),
+    )
+
+    ax.set_xlim(0, 100)
+    ax.set_ylim(0, 1.4)
+
+    ax.set_xticks([0, 30, 42, 54, 66, 78, 90, 100])
+
+    ax.set_xticklabels([
+        "0",
+        "30",
+        "42",
+        "54",
+        "66",
+        "78",
+        "90",
+        "100"
+    ])
+    ax.text(15, 0.5, "A", ha="center",
+            color="white", fontweight="bold")
+
+    ax.text(36, 0.5, "B", ha="center",
+            color="white", fontweight="bold")
+
+    ax.text(48, 0.5, "C", ha="center",
+            color="white", fontweight="bold")
+
+    ax.text(60, 0.5, "D", ha="center",
+            color="white", fontweight="bold")
+
+    ax.text(72, 0.5, "E", ha="center",
+            color="white", fontweight="bold")
+
+    ax.text(84, 0.5, "F", ha="center",
+            color="white", fontweight="bold")
+
+    ax.text(95, 0.5, "G", ha="center",
+            color="white", fontweight="bold")
+    ax.set_yticks([])
+
+    ax.spines["left"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["top"].set_visible(False)
+
+    plt.tight_layout()
+
+    return fig
+
 def performance_map(
     title,
     current_x,
@@ -350,18 +440,14 @@ def performance_map(
         label="Current Product"
     )
 
-    # ---------------------------------------------
-    # Grade labels
-    # ---------------------------------------------
+    grade_colors = {
+        "A": "#00aa00",
+        "B": "#7fc942",
+        "C": "#e0b000",
+        "D": "#ff5500",
+    }
 
     for grade, (x_pos, y_pos) in label_positions.items():
-
-        grade_colors = {
-            "A": "#00aa00",
-            "B": "#7fc942",
-            "C": "#e0b000",
-            "D": "#ff5500",
-        }
 
         ax.text(
             x_pos,
@@ -877,11 +963,31 @@ def create_pdf_report(
 
     elements.append(results_table)
 
-    elements.append(Spacer(1, 8))
+    elements.append(Spacer(1, 12))
+
+    elements.append(
+        Paragraph(
+            "EEI Margin",
+            styles["Heading2"]
+        )
+    )
+
+    elements.append(
+        Image(
+            "eei_scale.png",
+            width=450,
+            height=75
+        )
+    )
+
+    elements.append(
+        Spacer(1, 12)
+    )
 
     # =================================================
     # PERFORMANCE GRADES
     # =================================================
+
 
     elements.append(
         Paragraph(
@@ -1492,12 +1598,6 @@ with m2:
             f"{eei_margin['to_better']:.2f}"
         )
 
-st.markdown("")
-
-st.metric(
-    "Current Energy Class",
-    grade
-)
 
 # =====================================================
 # PERFORMANCE GRADES
@@ -1574,6 +1674,17 @@ st.markdown(
 """
 )
 
+st.divider()
+
+st.subheader("EEI Graph")
+
+eei_fig = eei_scale(eei)
+
+st.pyplot(
+    eei_fig,
+    use_container_width=True
+)
+
 # =====================================================
 # PERFORMANCE MAPS
 # =====================================================
@@ -1613,7 +1724,9 @@ with c1:
         },
     )
 
-    st.pyplot(carpet_fig)
+    if carpet_fig is not None:
+        st.pyplot(carpet_fig)
+
 
 with c2:
 
@@ -1646,16 +1759,19 @@ with c2:
         },
     )
 
-    st.pyplot(hardfloor_fig)
+    if hardfloor_fig is not None:
+        st.pyplot(hardfloor_fig)
 
-st.subheader("Sound Map")
+
+st.subheader("Sound Performance Map")
 
 sound_fig = sound_map(
     sound_carpet,
     sound_hardfloor,
 )
 
-st.pyplot(sound_fig)
+if sound_fig is not None:
+    st.pyplot(sound_fig)
 
 # =====================================================
 # REPORT INFORMATION
@@ -1704,6 +1820,13 @@ with st.expander("Report Information", expanded=True):
 # =====================================================
 # GENERATE REPORT
 # =====================================================
+
+eei_fig = eei_scale(eei)
+
+eei_fig.savefig(
+    "eei_scale.png",
+    bbox_inches="tight"
+)
 
 carpet_fig.savefig(
     "carpet_map.png",
