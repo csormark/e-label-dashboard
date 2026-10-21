@@ -151,23 +151,32 @@ def calculate_cpgp(
 
 
 def calculate_cp_factor(
-    cpgp,
+    cp_meas,
+    cp_min,
 ):
     """
-    Excel D25
+    CP Factor
 
-    =0.84375/(0.66*0.84375+0.33*CPgp)
+    General Purpose:
+        CPmin = 0.84375
+
+    Hard Floor:
+        CPmin = 0.90
+
+    Carpet:
+        CPmin = 0.675
+
+    Formula:
+        CPmin / (0.66 * CPmin + 0.33 * CPmeas)
     """
 
     return (
-        0.84375
+        cp_min
         / (
-            0.66 * 0.84375
-            + 0.33 * cpgp
+            0.66 * cp_min
+            + 0.33 * cp_meas
         )
     )
-
-
 # ============================================================
 # EEI
 # ============================================================

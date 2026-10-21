@@ -631,6 +631,7 @@ def create_pdf_report(
     comments,
 
     power_type,
+    cleaner_category,
 
     nozzle_width,
     maintenance_power,
@@ -767,6 +768,7 @@ def create_pdf_report(
         ["GENERAL", ""],
 
         ["Product Type", power_type],
+        ["Cleaner Category", cleaner_category],
         ["Nozzle Width", f"{nozzle_width} mm"],
         ["Maintenance Power", f"{maintenance_power:.1f} W"],
         ["Battery Efficiency", f"{battery_efficiency:.0%}"],
@@ -998,10 +1000,23 @@ def create_pdf_report(
 
     grades_data = [
         ["Category", "Grade", "Value"],
-        ["Carpet", carpet_class, f"{cp_carpet:.1f}"],
-        ["Hard Floor", hardfloor_class, f"{cp_hardfloor:.1f}"],
-        ["Sound", sound_class, f"{sound_gp:.1f} dBA"],
     ]
+
+    if cleaner_category != "Hard Floor Only":
+
+        grades_data.append(
+            ["Carpet", carpet_class, f"{cp_carpet:.1f}"]
+        )
+
+    if cleaner_category != "Carpet Only":
+
+        grades_data.append(
+            ["Hard Floor", hardfloor_class, f"{cp_hardfloor:.1f}"]
+        )
+
+    grades_data.append(
+        ["Sound", sound_class, f"{sound_gp:.1f} dBA"]
+    )
 
     grades_table = Table(
         grades_data,
@@ -1048,57 +1063,67 @@ def create_pdf_report(
         )
     )
 
-    elements.append(
-        Paragraph(
-            "Carpet Performance Map",
-            styles["Heading3"]
+    if cleaner_category != "Hard Floor Only":
+
+        elements.append(
+            Paragraph(
+                "Carpet Performance Map",
+                styles["Heading3"]
+            )
         )
-    )
 
-    elements.append(
-        Image(
-            "carpet_map.png",
-            width=300,
-            height=220
+        elements.append(
+            Image(
+                "carpet_map.png",
+                width=300,
+                height=220
+            )
         )
-    )
 
-    elements.append(
-        Spacer(1, 10)
-    )
-
-    elements.append(
-        Paragraph(
-            "Hard Floor Performance Map",
-            styles["Heading3"]
+        elements.append(
+            Spacer(1, 10)
         )
-    )
 
-    elements.append(
-        Image(
-            "hardfloor_map.png",
-            width=300,
-            height=220
+    if cleaner_category != "Carpet Only":
+
+        elements.append(
+            Paragraph(
+                "Hard Floor Performance Map",
+                styles["Heading3"]
+            )
         )
-    )
 
-    elements.append(PageBreak())
-
-    elements.append(
-        Paragraph(
-            "Sound Map",
-            styles["Heading3"]
+        elements.append(
+            Image(
+                "hardfloor_map.png",
+                width=300,
+                height=220
+            )
         )
-    )
 
-    elements.append(
-        Image(
-            "sound_map.png",
-            width=300,
-            height=220
+        elements.append(
+            Spacer(1, 10)
         )
-    )
-   
+
+    if cleaner_category == "General Purpose":
+
+        elements.append(PageBreak())
+
+        elements.append(
+            Paragraph(
+                "Sound Map",
+                styles["Heading3"]
+            )
+        )
+
+        elements.append(
+            Image(
+                "sound_map.png",
+                width=300,
+                height=220
+            )
+        )
+
     doc.build(elements)
 
     pdf = buffer.getvalue()
@@ -1122,6 +1147,19 @@ power_type = st.segmented_control(
     options=["Cordless", "Corded"],
     default="Cordless"
 )
+
+cleaner_category = st.segmented_control(
+    "Cleaner Category",
+    options=[
+        "General Purpose",
+        "Hard Floor Only",
+        "Carpet Only",
+    ],
+    default="General Purpose",
+)
+
+carpet_active = cleaner_category != "Hard Floor Only"
+hardfloor_active = cleaner_category != "Carpet Only"
 
 # =====================================================
 # POWER OVERRIDE
@@ -1219,8 +1257,8 @@ with p1:
         "MFU power Carpet [W]",
         0,
         750,
-        400,
-        disabled=override_power
+        300,
+        disabled=override_power or not carpet_active
     )
 
     if power_type == "Cordless":
@@ -1230,7 +1268,7 @@ with p1:
             0,
             100,
             50,
-            disabled=override_power
+            disabled=override_power or not carpet_active
         )
 
     else:
@@ -1252,7 +1290,7 @@ with p1:
             0,
             50,
             0,
-            disabled=override_power,
+            disabled=override_power or not carpet_active,
             help="""Input power added on carpet due to clogging performance drop"""
         ) / 100
     )
@@ -1280,9 +1318,19 @@ with p1:
 
         power_carpet = calculated_carpet_power
 
+    if carpet_active:
+
         st.metric(
             "Total Carpet Power [W]",
             f"{power_carpet:.0f}"
+        )
+
+    else:
+
+        st.caption("Total Carpet Power [W]")
+        st.markdown(
+            f"<span style='color:grey;font-size:32px'>{power_carpet:.0f}</span>",
+            unsafe_allow_html=True,
         )
         
     
@@ -1292,7 +1340,8 @@ with p1:
             70,
             100,
             75,
-            help="""3 DS dust removal from Wilton carpet"""
+            help="""3 DS dust removal from Wilton carpet""",
+            disabled=not carpet_active,
         ) / 100
     )
 
@@ -1302,7 +1351,8 @@ with p1:
             45,
             100,
             80,
-            help="""3 DS FS/BS average debris pick up on carpet"""
+            help="""3 DS FS/BS average debris pick up on carpet""",
+            disabled=not carpet_active,
         ) / 100
     )
 
@@ -1316,7 +1366,7 @@ with p2:
         0,
         750,
         400,
-        disabled=override_power
+       disabled=override_power or not hardfloor_active,
     )
 
     if power_type == "Cordless":
@@ -1326,7 +1376,7 @@ with p2:
             0,
             100,
             10,
-            disabled=override_power
+            disabled=override_power or not hardfloor_active,
         )
 
     else:
@@ -1348,8 +1398,8 @@ with p2:
             0,
             50,
             0,
-            disabled=override_power,
-            help="""Input power added on hardfloor due to clogging performance drop"""
+            disabled=override_power or not hardfloor_active,
+            help="""Input power added on hardfloor due to clogging performance drop""",
         ) / 100
     )
         # Calculated Hard Floor Power
@@ -1375,10 +1425,20 @@ with p2:
 
         power_hardfloor = calculated_hardfloor_power
 
-        st.metric(
-            "Total Hard Floor Power [W]",
-            f"{power_hardfloor:.0f}"
-        )
+        if hardfloor_active:
+
+            st.metric(
+                "Total Hard Floor Power [W]",
+                f"{power_hardfloor:.0f}"
+            )
+
+        else:
+
+            st.caption("Total Hard Floor Power [W]")
+            st.markdown(
+                f"<span style='color:grey;font-size:32px'>{power_hardfloor:.0f}</span>",
+                unsafe_allow_html=True,
+            )
 
 
     dpu_hardfloor = (
@@ -1387,7 +1447,8 @@ with p2:
             95,
             115,
             105,
-            help="""3 DS dust removal from crevice"""
+            help="""3 DS dust removal from crevice""",
+            disabled=not hardfloor_active,
         ) / 100
     )
 
@@ -1397,7 +1458,8 @@ with p2:
             45,
             100,
             80,
-            help="""3 DS FS/BS average debris pick up on hardfloor"""
+            help="""3 DS FS/BS average debris pick up on hardfloor""",
+            disabled=not hardfloor_active,
         ) / 100
     )
 
@@ -1413,14 +1475,16 @@ with s1:
 
     sound_carpet = st.number_input(
         "Sound Carpet [dBA]",
-        value=57
+        value=65,
+        disabled=not carpet_active,
     )
 
 with s2:
 
     sound_hardfloor = st.number_input(
         "Sound Hard Floor [dBA]",
-        value=70
+        value=75,
+        disabled=not hardfloor_active,
     )
 
 st.divider()
@@ -1429,11 +1493,31 @@ st.divider()
 # CALCULATIONS
 # =====================================================
 
-eon = calculate_eon(
-    power_carpet,
-    power_hardfloor,
-    nozzle_width,
-)
+if cleaner_category == "General Purpose":
+
+    eon = calculate_eon(
+        power_carpet,
+        power_hardfloor,
+        nozzle_width,
+    )
+
+elif cleaner_category == "Hard Floor Only":
+
+    eon = (
+        power_hardfloor
+        * 17.4
+        / (0.5 * nozzle_width / 1000)
+        / 3600
+    )
+
+else:  # Carpet Only
+
+    eon = (
+        power_carpet
+        * 17.4
+        / (0.5 * nozzle_width / 1000)
+        / 3600
+    )
 
 eaux = calculate_eaux()
 
@@ -1462,8 +1546,35 @@ cpgp = calculate_cpgp(
     cp_hardfloor
 )
 
+if cleaner_category == "General Purpose":
+
+    cp_meas = cpgp
+    cp_min = (
+    (0.9 * 0.70 + 0.1 * 0.45)*0.25
+    +
+    (0.9 * 0.95 + 0.1 * 0.45)*0.75
+) 
+elif cleaner_category == "Hard Floor Only":
+
+    cp_meas = cp_hardfloor / 100
+
+    cp_min = (
+        0.9 * 0.95
+        + 0.1 * 0.45
+    )
+
+else:
+
+    cp_meas = cp_carpet / 100
+
+    cp_min = (
+        0.9 * 0.70
+        + 0.1 * 0.45
+    )
+
 cp_factor = calculate_cp_factor(
-    cpgp
+    cp_meas,
+    cp_min
 )
 
 eei = calculate_eei(
@@ -1475,14 +1586,24 @@ grade = energy_grade(
     eei
 )
 
-sound_gp = calculate_sound_gp(
-    sound_carpet,
-    sound_hardfloor
-)
+if cleaner_category == "General Purpose":
 
+    sound_value = calculate_sound_gp(
+        sound_carpet,
+        sound_hardfloor
+    )
+
+elif cleaner_category == "Hard Floor Only":
+
+    sound_value = sound_hardfloor
+
+else:
+
+    sound_value = sound_carpet
+    
 carpet_class = carpet_grade(cp_carpet)
 hardfloor_class = hardfloor_grade(cp_hardfloor)
-sound_class = sound_grade(sound_gp)
+sound_class = sound_grade(sound_value)
 eei_margin = eei_margins(eei)
 
 eei_margin_pct = (
@@ -1492,7 +1613,7 @@ eei_margin_pct = (
 )
 carpet_margin = carpet_margins(cp_carpet)
 hardfloor_margin = hardfloor_margins(cp_hardfloor)
-sound_margin = sound_margins(sound_gp)
+sound_margin = sound_margins(sound_value)
 
 # =====================================================
 # RESULTS
@@ -1524,6 +1645,10 @@ with k4:
     st.metric(
         "Energy Class",
         grade
+    )
+    
+    st.caption(
+    f"Category: {cleaner_category}"
     )
 
 # =====================================================
@@ -1568,8 +1693,8 @@ with p2:
 
 with p3:
     st.metric(
-        "Sound Power",
-        f"{sound_gp:.1f} dBA",
+    "Sound Power",
+    f"{sound_value:.1f} dBA",
     )
 
 # =====================================================
@@ -1603,42 +1728,89 @@ with m2:
 # PERFORMANCE GRADES
 # =====================================================
 
+def grade_card_disabled(title, grade):
+
+    st.markdown(
+        f"""
+        <div style="
+            background:#d3d3d3;
+            color:#666666;
+            border-radius:12px;
+            padding:20px;
+            text-align:center;
+            opacity:0.5;
+        ">
+            <div style="font-size:18px;">
+                {title}
+            </div>
+            <div style="
+                font-size:48px;
+                font-weight:bold;
+            ">
+                {grade}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
 st.subheader("Performance Grades")
 
 g1, g2, g3 = st.columns(3)
 
 with g1:
 
-    grade_card(
-        "Carpet",
-        carpet_class
-    )
+    if carpet_active:
 
-    st.caption(
-        f"Margin to lower grade: {carpet_margin['to_worse']:.1f}"
-    )
-
-    if carpet_class != "A":
-        st.caption(
-            f"Needed for next grade: {carpet_margin['to_better']:.1f}"
+        grade_card(
+            "Carpet",
+            carpet_class
         )
 
+        st.caption(
+            f"Margin to lower grade: {carpet_margin['to_worse']:.1f}"
+        )
+
+        if carpet_class != "A":
+
+            st.caption(
+                f"Needed for next grade: {carpet_margin['to_better']:.1f}"
+            )
+
+    else:
+
+        grade_card_disabled(
+            "Carpet",
+            carpet_class
+        )
+        st.caption("Not applicable")
+        
 with g2:
 
-    grade_card(
-        "Hard Floor",
-        hardfloor_class
-    )
+    if hardfloor_active:
 
-    st.caption(
-        f"Margin to lower grade: {hardfloor_margin['to_worse']:.1f}"
-    )
-
-    if hardfloor_class != "A":
-        st.caption(
-            f"Needed for next grade: {hardfloor_margin['to_better']:.1f}"
+        grade_card(
+            "Hard Floor",
+            hardfloor_class
         )
 
+        st.caption(
+            f"Margin to lower grade: {hardfloor_margin['to_worse']:.1f}"
+        )
+
+        if hardfloor_class != "A":
+
+            st.caption(
+                f"Needed for next grade: {hardfloor_margin['to_better']:.1f}"
+            )
+
+    else:
+
+        grade_card_disabled(
+            "Hard Floor",
+            hardfloor_class
+        )
+        st.caption("Not applicable")
 
 with g3:
 
@@ -1668,7 +1840,7 @@ st.markdown(
 
 **Hard Floor Cleaning Performance:** {cp_hardfloor:.1f} ({hardfloor_class})
 
-**Sound Power:** {sound_gp:.1f} dBA ({sound_class})
+**Sound Power:** {sound_value:.1f} dBA ({sound_class})
 
 **CP Factor:** {cp_factor:.6f}
 """
@@ -1691,9 +1863,81 @@ st.pyplot(
 
 st.header("Performance Maps")
 
-c1, c2 = st.columns(2)
+carpet_fig = None
+hardfloor_fig = None
+sound_fig = None
 
-with c1:
+if cleaner_category == "General Purpose":
+
+    c1, c2 = st.columns(2)
+
+    with c1:
+
+        carpet_fig = performance_map(
+            title="Carpet Performance Grade",
+
+            current_x=dpu_carpet * 100,
+            current_y=debris_carpet * 100,
+
+            boundaries={
+                "A": 81,
+                "B": 77,
+                "C": 72,
+            },
+
+            x_range=(70, 86),
+            y_range=(45, 100),
+
+            x_label="Dust Pick-Up [%]",
+            y_label="Debris Pick-Up [%]",
+
+            x_weight=0.9,
+            y_weight=0.1,
+
+            label_positions={
+                "D": (71.0, 68),
+                "C": (75.5, 68),
+                "B": (79.8, 68),
+                "A": (84.2, 68),
+            },
+        )
+
+        st.pyplot(carpet_fig)
+
+    with c2:
+
+        hardfloor_fig = performance_map(
+            title="Hard Floor Performance Grade",
+
+            current_x=dpu_hardfloor * 100,
+            current_y=debris_hardfloor * 100,
+
+            boundaries={
+                "A": 106,
+                "B": 101,
+                "C": 95,
+            },
+
+            x_range=(95, 115),
+            y_range=(45, 100),
+
+            x_label="Dust Pick-Up [%]",
+            y_label="Debris Pick-Up [%]",
+
+            x_weight=0.9,
+            y_weight=0.1,
+
+            label_positions={
+                "D": (96.0, 68),
+                "C": (101.0, 68),
+                "B": (107.5, 68),
+                "A": (112.5, 68),
+            },
+        )
+
+        st.pyplot(hardfloor_fig)
+
+elif cleaner_category == "Carpet Only":
 
     carpet_fig = performance_map(
         title="Carpet Performance Grade",
@@ -1724,11 +1968,9 @@ with c1:
         },
     )
 
-    if carpet_fig is not None:
-        st.pyplot(carpet_fig)
+    st.pyplot(carpet_fig)
 
-
-with c2:
+else:  # Hard Floor Only
 
     hardfloor_fig = performance_map(
         title="Hard Floor Performance Grade",
@@ -1759,19 +2001,25 @@ with c2:
         },
     )
 
-    if hardfloor_fig is not None:
-        st.pyplot(hardfloor_fig)
+    st.pyplot(hardfloor_fig)
 
+if cleaner_category == "General Purpose":
 
-st.subheader("Sound Performance Map")
+    st.subheader("Sound Performance Map")
 
-sound_fig = sound_map(
-    sound_carpet,
-    sound_hardfloor,
-)
+    sound_fig = sound_map(
+        sound_carpet,
+        sound_hardfloor,
+    )
 
-if sound_fig is not None:
-    st.pyplot(sound_fig)
+    if sound_fig is not None:
+        st.pyplot(sound_fig)
+
+else:
+
+    st.info(
+        "Sound performance map is only applicable for General Purpose cleaners."
+    )
 
 # =====================================================
 # REPORT INFORMATION
@@ -1816,7 +2064,6 @@ with st.expander("Report Information", expanded=True):
             height=80
         )
 
-
 # =====================================================
 # GENERATE REPORT
 # =====================================================
@@ -1828,20 +2075,26 @@ eei_fig.savefig(
     bbox_inches="tight"
 )
 
-carpet_fig.savefig(
-    "carpet_map.png",
-    bbox_inches="tight"
-)
+if carpet_fig is not None:
 
-hardfloor_fig.savefig(
-    "hardfloor_map.png",
-    bbox_inches="tight"
-)
+    carpet_fig.savefig(
+        "carpet_map.png",
+        bbox_inches="tight"
+    )
 
-sound_fig.savefig(
-    "sound_map.png",
-    bbox_inches="tight"
-)
+if hardfloor_fig is not None:
+
+    hardfloor_fig.savefig(
+        "hardfloor_map.png",
+        bbox_inches="tight"
+    )
+
+if sound_fig is not None:
+
+    sound_fig.savefig(
+        "sound_map.png",
+        bbox_inches="tight"
+    )
 
 pdf_report = create_pdf_report(
 
@@ -1853,6 +2106,7 @@ pdf_report = create_pdf_report(
     comments=comments,
 
     power_type=power_type,
+    cleaner_category=cleaner_category,
 
     nozzle_width=nozzle_width,
     maintenance_power=maintenance_power,
@@ -1889,20 +2143,27 @@ pdf_report = create_pdf_report(
 
     cp_carpet=cp_carpet,
     cp_hardfloor=cp_hardfloor,
-    sound_gp=sound_gp,
+    sound_gp=sound_value,
 )
 
+if cleaner_category == "General Purpose":
 
-st.download_button(
-    label="📄 Download PDF Report",
-    data=pdf_report,
-    file_name="e_label_report.pdf",
-    mime="application/pdf"
-)
+    st.download_button(
+        label="📄 Download PDF Report",
+        data=pdf_report,
+        file_name="e_label_report.pdf",
+        mime="application/pdf"
+    )
+
+else:
+
+    st.info(
+        "PDF reporting is currently available for General Purpose cleaners only."
+    )
 
 st.info(
     """
-    Version 0.9.8 | Last updated: 2026-10-14
+    Version 1.0 | Last updated: 2026-10-21
 
     Author: CS
     """
