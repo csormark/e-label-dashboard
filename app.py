@@ -1425,21 +1425,21 @@ with p2:
 
         power_hardfloor = calculated_hardfloor_power
 
-        if hardfloor_active:
+    if hardfloor_active:
 
-            st.metric(
-                "Total Hard Floor Power [W]",
-                f"{power_hardfloor:.0f}"
-            )
+        st.metric(
+            "Total Hard Floor Power [W]",
+            f"{power_hardfloor:.0f}"
+        )
 
-        else:
+    else:
 
-            st.caption("Total Hard Floor Power [W]")
-            st.markdown(
-                f"<span style='color:grey;font-size:32px'>{power_hardfloor:.0f}</span>",
-                unsafe_allow_html=True,
-            )
-
+        st.caption("Total Hard Floor Power [W]")
+        st.markdown(
+            f"<span style='color:grey;font-size:32px'>{power_hardfloor:.0f}</span>",
+            unsafe_allow_html=True,
+        )
+        st.caption("Not used in EEI calculation")
 
     dpu_hardfloor = (
         st.slider(
