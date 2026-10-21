@@ -2025,128 +2025,133 @@ else:
 # REPORT INFORMATION
 # =====================================================
 
-st.subheader("Export")
-
-with st.expander("Report Information", expanded=True):
-
-    c1, c2 = st.columns(2)
-
-    with c1:
-        platform_name = st.text_input(
-            "Platform",
-            value=""
-        )
-
-        model_name = st.text_input(
-            "Model",
-            value=""
-        )
-
-        model_code = st.text_input(
-            "Model Code",
-            value=""
-        )
-
-    with c2:
-        report_by = st.text_input(
-            "Report by",
-            value=""
-        )
-
-        info_field = st.text_input(
-            "Additional info",
-            value=""
-        )
-
-        comments = st.text_area(
-            "Comments",
-            value="",
-            height=80
-        )
-
-# =====================================================
-# GENERATE REPORT
-# =====================================================
-
-eei_fig = eei_scale(eei)
-
-eei_fig.savefig(
-    "eei_scale.png",
-    bbox_inches="tight"
-)
-
-if carpet_fig is not None:
-
-    carpet_fig.savefig(
-        "carpet_map.png",
-        bbox_inches="tight"
-    )
-
-if hardfloor_fig is not None:
-
-    hardfloor_fig.savefig(
-        "hardfloor_map.png",
-        bbox_inches="tight"
-    )
-
-if sound_fig is not None:
-
-    sound_fig.savefig(
-        "sound_map.png",
-        bbox_inches="tight"
-    )
-
-pdf_report = create_pdf_report(
-
-    platform_name=platform_name,
-    model_name=model_name,
-    model_code=model_code,
-    report_by=report_by,
-    info_field=info_field,
-    comments=comments,
-
-    power_type=power_type,
-    cleaner_category=cleaner_category,
-
-    nozzle_width=nozzle_width,
-    maintenance_power=maintenance_power,
-    dcpm_power=dcpm_power,
-
-    battery_efficiency=battery_efficiency,
-    charger_efficiency=charger_efficiency,
-
-    power_carpet=power_carpet,
-    power_hardfloor=power_hardfloor,
-
-    mfu_carpet=mfu_carpet,
-    nozzle_carpet=nozzle_carpet,
-    clogging_carpet=clogging_carpet,
-    dpu_carpet=dpu_carpet,
-    debris_carpet=debris_carpet,
-    sound_carpet=sound_carpet,
-
-    mfu_hardfloor=mfu_hardfloor,
-    nozzle_hardfloor=nozzle_hardfloor,
-    clogging_hardfloor=clogging_hardfloor,
-    dpu_hardfloor=dpu_hardfloor,
-    debris_hardfloor=debris_hardfloor,
-    sound_hardfloor=sound_hardfloor,
-
-    eei=eei,
-    ae=ae,
-    cp_factor=cp_factor,
-
-    grade=grade,
-    carpet_class=carpet_class,
-    hardfloor_class=hardfloor_class,
-    sound_class=sound_class,
-
-    cp_carpet=cp_carpet,
-    cp_hardfloor=cp_hardfloor,
-    sound_gp=sound_value,
-)
-
 if cleaner_category == "General Purpose":
+
+    st.subheader("Export")
+
+    with st.expander(
+        "Report Information",
+        expanded=True
+    ):
+
+        c1, c2 = st.columns(2)
+
+        with c1:
+
+            platform_name = st.text_input(
+                "Platform",
+                value=""
+            )
+
+            model_name = st.text_input(
+                "Model",
+                value=""
+            )
+
+            model_code = st.text_input(
+                "Model Code",
+                value=""
+            )
+
+        with c2:
+
+            report_by = st.text_input(
+                "Report by",
+                value=""
+            )
+
+            info_field = st.text_input(
+                "Additional info",
+                value=""
+            )
+
+            comments = st.text_area(
+                "Comments",
+                value="",
+                height=80
+            )
+
+    # =====================================================
+    # GENERATE REPORT
+    # =====================================================
+
+    eei_fig = eei_scale(eei)
+
+    eei_fig.savefig(
+        "eei_scale.png",
+        bbox_inches="tight"
+    )
+
+    if carpet_fig is not None:
+
+        carpet_fig.savefig(
+            "carpet_map.png",
+            bbox_inches="tight"
+        )
+
+    if hardfloor_fig is not None:
+
+        hardfloor_fig.savefig(
+            "hardfloor_map.png",
+            bbox_inches="tight"
+        )
+
+    if sound_fig is not None:
+
+        sound_fig.savefig(
+            "sound_map.png",
+            bbox_inches="tight"
+        )
+
+    pdf_report = create_pdf_report(
+
+        platform_name=platform_name,
+        model_name=model_name,
+        model_code=model_code,
+        report_by=report_by,
+        info_field=info_field,
+        comments=comments,
+
+        power_type=power_type,
+        cleaner_category=cleaner_category,
+
+        nozzle_width=nozzle_width,
+        maintenance_power=maintenance_power,
+        dcpm_power=dcpm_power,
+
+        battery_efficiency=battery_efficiency,
+        charger_efficiency=charger_efficiency,
+
+        power_carpet=power_carpet,
+        power_hardfloor=power_hardfloor,
+
+        mfu_carpet=mfu_carpet,
+        nozzle_carpet=nozzle_carpet,
+        clogging_carpet=clogging_carpet,
+        dpu_carpet=dpu_carpet,
+        debris_carpet=debris_carpet,
+        sound_carpet=sound_carpet,
+
+        mfu_hardfloor=mfu_hardfloor,
+        nozzle_hardfloor=nozzle_hardfloor,
+        clogging_hardfloor=clogging_hardfloor,
+        dpu_hardfloor=dpu_hardfloor,
+        debris_hardfloor=debris_hardfloor,
+        sound_hardfloor=sound_hardfloor,
+
+        eei=eei,
+        ae=ae,
+        cp_factor=cp_factor,
+
+        grade=grade,
+        carpet_class=carpet_class,
+        hardfloor_class=hardfloor_class,
+        sound_class=sound_class,
+
+        cp_carpet=cp_carpet,
+        cp_hardfloor=cp_hardfloor,
+        sound_gp=sound_value,
+    )
 
     st.download_button(
         label="📄 Download PDF Report",
@@ -2156,6 +2161,8 @@ if cleaner_category == "General Purpose":
     )
 
 else:
+
+    st.subheader("Export")
 
     st.info(
         "PDF reporting is currently available for General Purpose cleaners only."
