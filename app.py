@@ -1829,25 +1829,6 @@ with g3:
             f"Reduction needed for next grade: {sound_margin['to_better']:.1f} dBA"
         )
 
-
-st.markdown(
-    f"""
-**Energy Efficiency Index (EEI):** {eei:.1f}
-
-**Annual Energy Consumption (AE):** {ae:.1f} kWh/a
-
-**Carpet Cleaning Performance:** {cp_carpet:.1f} ({carpet_class})
-
-**Hard Floor Cleaning Performance:** {cp_hardfloor:.1f} ({hardfloor_class})
-
-**Sound Power:** {sound_value:.1f} dBA ({sound_class})
-
-**CP Factor:** {cp_factor:.6f}
-"""
-)
-
-st.divider()
-
 st.subheader("EEI Graph")
 
 eei_fig = eei_scale(eei)
@@ -2167,6 +2148,26 @@ else:
     st.info(
         "PDF reporting is currently available for General Purpose cleaners only."
     )
+
+st.divider()
+
+st.subheader("Summary of Results")
+
+st.markdown(
+    f"""
+**Energy Efficiency Index (EEI):** {eei:.1f}
+
+**Annual Energy Consumption (AE):** {ae:.1f} kWh/a
+
+**Carpet Cleaning Performance:** {cp_carpet:.1f} ({carpet_class})
+
+**Hard Floor Cleaning Performance:** {cp_hardfloor:.1f} ({hardfloor_class})
+
+**Sound Power:** {sound_value:.1f} dBA ({sound_class})
+
+**CP Factor:** {cp_factor:.6f}
+"""
+)
 
 st.info(
     """
