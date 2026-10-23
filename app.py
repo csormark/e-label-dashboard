@@ -2002,6 +2002,7 @@ else:
         "Sound performance map is only applicable for General Purpose cleaners."
     )
 
+st.divider()
 # =====================================================
 # REPORT INFORMATION
 # =====================================================
@@ -2171,7 +2172,7 @@ st.markdown(
 
 st.info(
     """
-    Version 1.0 | Last updated: 2026-10-21
+    Version 1.0.1 | Last updated: 2026-10-23
 
     Author: CS
     """
